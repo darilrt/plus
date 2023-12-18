@@ -62,7 +62,7 @@ class Project:
         
         if self.config['type'] == 'console-app' or self.config['type'] == 'app':
             with open(os.path.join(self.path, 'src', 'main.cpp'), 'w') as f:
-                f.write(MAIN_APP)        
+                f.write(MAIN_APP)
         elif self.config['type'] == 'static-lib':
             with open(os.path.join(self.path, 'src', 'lib.cpp'), 'w') as f:
                 f.write(MAIN_LIB)
