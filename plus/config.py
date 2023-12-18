@@ -17,7 +17,7 @@ class Config:
             "compiler": "g++",
             "standard": "c++17",
             "dependencies": []
-        }   
+        }
 
         if os.path.exists(self._path):
             self.load()
