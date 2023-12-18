@@ -2,7 +2,7 @@ import json
 import os
 
 class Config:
-    def __init__(self, path, type="console-app"):
+    def __init__(self, path: str, type="console-app"):
         self.is_valid = True
         self._path = path
         self._config = {
@@ -16,6 +16,8 @@ class Config:
             "license": "",
             "compiler": "g++",
             "standard": "c++17",
+            "includes": [],
+            "libs": [],
             "dependencies": []
         }
 
@@ -36,20 +38,20 @@ class Config:
         with open(self._path, 'w') as f:
             f.write(json.dumps(self._config, indent=4))
     
-    def get(self, key):
+    def get(self, key: str) -> any:
         return self._config[key]
     
-    def set(self, key, value):
+    def set(self, key: str, value: any):
         self._config[key] = value
     
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> any:
         return self.get(key)
     
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: any):
         self.set(key, value)
     
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         return key in self._config
     
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self._config)

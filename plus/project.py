@@ -5,7 +5,7 @@ from .lockfile import LockFile
 import os
 import json
 
-def exit(message=None):
+def exit(message: str=None):
     if message:
         print(message)
     os._exit(1)
@@ -18,14 +18,14 @@ class Project:
         'src',
     ]
 
-    def __init__(self, path, type="console-app"):
+    def __init__(self, path: str, type="console-app"):
         self.path = path
         self.name = os.path.basename(path)
         self.config = Config(path + '/project.json', type=type)
         self.lock = LockFile(path + '/project.lock')
 
         if not self.config.is_valid:
-            exit()
+            exit('project.json is not valid')
     
     def validate(self):
         if not os.path.exists(self.path):
@@ -83,7 +83,7 @@ class Project:
 
         objects = []
 
-        def compile_dir(path, dest, release=False):
+        def compile_dir(path: str, dest: str, release=False):
             for file in os.listdir(path):
                 if os.path.isdir(os.path.join(path, file)):
                     compile_dir(
@@ -104,11 +104,11 @@ class Project:
 
                     result = compiler.compile(file_path, dest, release=release)
 
-                    if not result[0]:
-                        exit(result[1])
+                    if not result.success:
+                        exit(result.returncode)
 
-                    objects.append(result[4])
-                    self.lock.add_file(file_path, object=result[4])
+                    objects.append(result.output)
+                    self.lock.add_file(file_path, object=result.output)
                     
                     print('\033[32m\u2713\033[0m', os.path.join(path, file))
         
@@ -121,8 +121,8 @@ class Project:
                 release=release
             )
 
-            if not result[0]:
-                exit(result[1])
+            if not result.success:
+                exit(result.returncode)
             
             print('\033[32m\u2713\033[0m compiled', self.config['name'])
             
