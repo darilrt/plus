@@ -1,0 +1,13 @@
+{
+    "files": {
+        ".\\src\\main.cpp": {
+            "stamp": 1702939126.5158188,
+            "object": ".\\obj\\main.o"
+        },
+        "src\\main.cpp": {
+            "stamp": 1702940714.7565072,
+            "object": "obj\\main.o"
+        }
+    },
+    "dependencies": {}
+}

@@ -21,9 +21,10 @@ class Project:
 
     def __init__(self, path: str, type="console-app"):
         self.path = path
+        self.fullpath = os.path.abspath(path)
         self.name = os.path.basename(path)
-        self.config = Config(path + '/project.json', type=type)
-        self.lock = LockFile(path + '/project.lock')
+        self.config = Config(self.fullpath + '/project.json', type=type)
+        self.lock = LockFile(self.fullpath + '/project.lock')
 
         if not self.config.is_valid:
             exit('project.json is not valid')
@@ -80,6 +81,9 @@ class Project:
         if 'name' not in self.config:
             exit('Project name not found')
 
+        oldcwd = os.getcwd()
+        os.chdir(self.path)
+
         compiler = SourceCompiler.from_config(self.config)
 
         objects = []
@@ -113,14 +117,18 @@ class Project:
                     
                     print('\033[32m\u2713\033[0m', os.path.join(path, file))
         
-        compile_dir(os.path.join(self.path, 'src'), os.path.join(self.path, 'obj'), release=release)
+        compile_dir('src', 'obj', release=release)
 
         if self.config['type'] == 'console-app' or self.config['type'] == 'app':
+            bindir = 'bin'
+
             result = compiler.link(
                 objects, 
-                os.path.join(self.path, 'bin', self.config['name']), 
+                os.path.join(bindir, self.config['name']),
                 release=release
             )
+
+            compiler.copy_binaries(bindir)
 
             if not result.success:
                 exit(result.returncode)
@@ -128,6 +136,8 @@ class Project:
             print('\033[32m\u2713\033[0m compiled', self.config['name'])
             
             self.lock.save()
+        
+        os.chdir(oldcwd)
 
     def run(self, release=False):
         if self.config['type'] == 'console-app' or self.config['type'] == 'app':

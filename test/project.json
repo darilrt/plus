@@ -1,0 +1,45 @@
+{
+    "version": "0.1.0",
+    "description": "",
+    "author": "",
+    "email": "",
+    "url": "",
+    "license": "",
+    "name": "test",
+    "type": "console-app",
+    "compiler": "g++",
+    "standard": "c++17",
+    "includes": [],
+    "libdirs": [],
+    "libs": [],
+    "requires": [
+        "sdl2"
+    ],
+    "dependencies": {
+        "sdl2": {
+            "libs": [
+                "SDL2main",
+                "SDL2"
+            ],
+            "defines": [
+                "SDL_MAIN_HANDLED"
+            ],
+            "windows": {
+                "build": [
+                    "wget https://www.libsdl.org/release/SDL2-devel-2.0.12-mingw.tar.gz -O sdl2.tar.gz",
+                    "tar -xf sdl2.tar.gz",
+                    "rm sdl2.tar.gz"
+                ],
+                "includes": [
+                    "SDL2-2.0.12/x86_64-w64-mingw32/include"
+                ],
+                "libdirs": [
+                    "SDL2-2.0.12/x86_64-w64-mingw32/lib"
+                ],
+                "binaries": [
+                    "SDL2-2.0.12/x86_64-w64-mingw32/bin/SDL2.dll"
+                ]
+            }
+        }
+    }
+}

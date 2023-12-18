@@ -39,7 +39,9 @@ def main():
     install_parser.set_defaults(func=install_project)
 
     args = parser.parse_args()
-    args.func(args)
+    
+    if hasattr(args, 'func'):
+        args.func(args)
 
 if __name__ == "__main__":
     main()

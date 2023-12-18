@@ -15,13 +15,14 @@ class CompilationResult:
         self.output = output
 
 class SourceCompiler:
-    def __init__(self, cxx='', cxxflags=[], libdirs=[], includes=[], libs=[], dlls=[]):
+    def __init__(self, cxx='', cxxflags=[], libdirs=[], includes=[], libs=[], binaries=[], defines=[]):
         self.cxx = cxx
         self.cxxflags = cxxflags
         self.libdirs = libdirs
         self.includes = includes
         self.libs = libs
-        self.dlls = dlls
+        self.binaries = binaries
+        self.defines = defines
 
     def compile(self, src: str, dest: str, release=False) -> CompilationResult:
         if not os.path.exists(dest):
@@ -30,8 +31,9 @@ class SourceCompiler:
         obj = os.path.join(dest, os.path.splitext(os.path.basename(src))[0] + '.o')
 
         includes = [f'-I{i}' for i in self.includes]
+        defines = [f'-D{d}' for d in self.defines]
 
-        result = subprocess.run([self.cxx, *self.cxxflags, *includes, '-c', src, '-o', obj])
+        result = subprocess.run([self.cxx, '-c', src, '-o', obj, *includes, *defines, *self.cxxflags])
 
         if result.returncode != 0:
             return CompilationResult(False, result.returncode, result.stderr, result.stdout, obj)
@@ -46,11 +48,12 @@ class SourceCompiler:
 
         if result.returncode != 0:
             return CompilationResult(False, result.returncode, result.stderr, result.stdout, dest)
-        
-        for dll in self.dlls:
-            shutil.copy(dll, os.path.dirname(dest))
 
         return CompilationResult(True, 0, '', '', dest)
+
+    def copy_binaries(self, bindir: str):
+        for binary in self.binaries:
+            shutil.copy(binary, bindir)
 
     @staticmethod
     def from_config(config: Config) -> 'SourceCompiler':
@@ -67,7 +70,8 @@ class SourceCompiler:
         includes = config.get('includes', [])
         libdirs = config.get('libdirs', [])
         libs = config.get('libs', [])
-        dlls = config.get('dlls', [])
+        binaries = config.get('binaries', [])
+        defines = config.get('defines', [])
 
         if 'requires' in config:
             deps = config.get('dependencies', {})
@@ -77,7 +81,8 @@ class SourceCompiler:
                     includes += dependence.includes
                     libdirs += dependence.libdirs
                     libs += dependence.libs
-                    dlls += dependence.dlls
+                    binaries += dependence.binaries
+                    defines += dependence.defines
         
         return SourceCompiler(
             cxx=config['compiler'],
@@ -85,5 +90,6 @@ class SourceCompiler:
             includes=includes,
             libdirs=libdirs,
             libs=libs,
-            dlls=dlls
+            binaries=binaries,
+            defines=defines
         )
