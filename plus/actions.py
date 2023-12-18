@@ -2,8 +2,6 @@ from .project import Project
 import os
 
 def init_project(args):
-    path: os.PathLike = os.path.join(os.getcwd(), args.init_name)
-
     type = 'console-app'
 
     if args.app:
@@ -13,17 +11,15 @@ def init_project(args):
     elif args.shared_lib:
         type = 'shared-lib'
     
-    project = Project(path, type=type)
+    project = Project(args.init_name, type=type)
     project.create()
 
 def build_project(args):
-    path: os.PathLike = os.path.join(os.getcwd(), args.build_name)
-
-    project = Project(path)
+    project = Project(args.build_name)
+    project.validate()
     project.build(release=args.release)
 
 def run_project(args):
-    path: os.PathLike = os.path.join(os.getcwd(), args.run_name)
-
-    project = Project(path)
+    project = Project(args.run_name)
+    project.validate()
     project.run(release=args.release)

@@ -1,0 +1,9 @@
+{
+    "files": {
+        "test\\src\\main.cpp": {
+            "stamp": 1702917666.3820393,
+            "object": "test\\obj\\main.o"
+        }
+    },
+    "dependencies": {}
+}

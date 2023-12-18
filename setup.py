@@ -1,7 +1,7 @@
 
 from setuptools import setup, find_packages
 
-with open('README.rst') as f:
+with open('README.md') as f:
     readme = f.read()
 
 with open('LICENSE') as f:
@@ -9,7 +9,7 @@ with open('LICENSE') as f:
 
 setup(
     name='plus',
-    version='0.1.0',
+    version='0.1.2',
     description='Plus is a library for managing c++ projects',
     long_description=readme,
     author='Daril Rodriguez',

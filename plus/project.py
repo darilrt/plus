@@ -1,8 +1,14 @@
 from .config import Config
 from .source import SourceCompiler
+from .lockfile import LockFile
 
 import os
 import json
+
+def exit(message=None):
+    if message:
+        print(message)
+    os._exit(1)
 
 class Project:
     folders = [
@@ -16,14 +22,33 @@ class Project:
         self.path = path
         self.name = os.path.basename(path)
         self.config = Config(path + '/project.json', type=type)
+        self.lock = LockFile(path + '/project.lock')
 
         if not self.config.is_valid:
             exit()
     
+    def validate(self):
+        if not os.path.exists(self.path):
+            exit(self.path + ' does not exist')
+    
+        if not os.path.exists(os.path.join(self.path, 'project.json')):
+            exit('project.json does not exist')
+        
+        if not self.config.is_valid:
+            exit('project.json is not valid')
+        
+        if 'name' not in self.config:
+            exit('Project name not found')
+
+        self.lock.load()
+
+        if not self.lock.is_valid:
+            exit('project.lock is not valid')
+
     def create(self, ignore_exists=True):
         if os.path.exists(self.path):
             if not ignore_exists:
-                raise Exception('Project already exists')
+                exit('Project already exists')
         else:
             os.mkdir(self.path)
 
@@ -51,6 +76,9 @@ class Project:
         self.config.save()
 
     def build(self, release=False):
+        if 'name' not in self.config:
+            exit('Project name not found')
+
         compiler = SourceCompiler.from_config(self.config)
 
         objects = []
@@ -65,24 +93,40 @@ class Project:
                     )
                 
                 elif file.endswith('.cpp'):
-                    result = compiler.compile(os.path.join(path, file), dest, release=release)
+                    file_path = os.path.join(path, file)
+                    stamp = os.path.getmtime(file_path)
+
+                    if file_path in self.lock.files:
+                        if self.lock.files[file_path]['stamp'] == stamp:
+                            if 'object' in self.lock.files[file_path]:
+                                objects.append(self.lock.files[file_path]['object'])
+                                continue
+
+                    result = compiler.compile(file_path, dest, release=release)
 
                     if not result[0]:
                         exit(result[1])
 
                     objects.append(result[4])
+                    self.lock.add_file(file_path, object=result[4])
                     
                     print('\033[32m\u2713\033[0m', os.path.join(path, file))
         
         compile_dir(os.path.join(self.path, 'src'), os.path.join(self.path, 'obj'), release=release)
 
         if self.config['type'] == 'console-app' or self.config['type'] == 'app':
-            result = compiler.link(objects, os.path.join(self.path, 'bin', self.name), release=release)
+            result = compiler.link(
+                objects, 
+                os.path.join(self.path, 'bin', self.config['name']), 
+                release=release
+            )
 
             if not result[0]:
                 exit(result[1])
             
-            print('\033[32m\u2713\033[0m compiled', os.path.join(self.path, 'bin', self.name))
+            print('\033[32m\u2713\033[0m compiled', self.config['name'])
+            
+            self.lock.save()
 
     def run(self, release=False):
         if self.config['type'] == 'console-app' or self.config['type'] == 'app':
