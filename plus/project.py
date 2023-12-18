@@ -192,6 +192,9 @@ GITIGNORE = '''\
 # Executables
 *.exe
 *.out
+
+# Vendor
+vendor/
 '''
 
 MAIN_APP = '''\
