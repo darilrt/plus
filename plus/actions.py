@@ -23,3 +23,8 @@ def run_project(args):
     project = Project(args.run_name)
     project.validate()
     project.run(release=args.release)
+
+def install_project(args):
+    project = Project('.')
+    project.validate()
+    project.install_requirements()

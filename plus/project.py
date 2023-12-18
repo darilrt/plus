@@ -1,6 +1,7 @@
 from .config import Config
-from .source import SourceCompiler
+from .source_compiler import SourceCompiler
 from .lockfile import LockFile
+from .dependence import Dependence
 
 import os
 import json
@@ -131,9 +132,26 @@ class Project:
     def run(self, release=False):
         if self.config['type'] == 'console-app' or self.config['type'] == 'app':
             self.build(release=release)
-            os.system(os.path.join(self.path, 'bin', self.name))
+            print("Running", self.config['name'] + "...")
+            os.system(os.path.join(self.path, 'bin', self.config['name']))
         else:
             print("Project is not an app, cannot run")
+
+    def install_requirements(self):
+        if 'requires' not in self.config:
+            return
+
+        for requirement in self.config['requires']:
+            print('Installing', requirement)
+
+            if requirement in self.config['dependencies']:
+                dependence = Dependence(
+                    requirement,
+                    self.config['dependencies'][requirement],
+                    self.path
+                )
+                dependence.resolve()
+
 
 GITIGNORE = '''\
 # Compiled Object files

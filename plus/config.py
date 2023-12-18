@@ -6,19 +6,21 @@ class Config:
         self.is_valid = True
         self._path = path
         self._config = {
-            "name": "<name>",
-            "type": type,
             "version": "0.1.0",
             "description": "",
             "author": "",
             "email": "",
             "url": "",
             "license": "",
+            "name": "<name>",
+            "type": type,
             "compiler": "g++",
             "standard": "c++17",
             "includes": [],
+            "libdirs": [],
             "libs": [],
-            "dependencies": []
+            "requires": [],
+            "dependencies": {}
         }
 
         if os.path.exists(self._path):
@@ -38,14 +40,14 @@ class Config:
         with open(self._path, 'w') as f:
             f.write(json.dumps(self._config, indent=4))
     
-    def get(self, key: str) -> any:
-        return self._config[key]
+    def get(self, key: str, default: any) -> any:
+        return self._config.get(key, default)
     
     def set(self, key: str, value: any):
         self._config[key] = value
     
     def __getitem__(self, key: str) -> any:
-        return self.get(key)
+        return self.get(key, None)
     
     def __setitem__(self, key: str, value: any):
         self.set(key, value)

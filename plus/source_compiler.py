@@ -1,5 +1,8 @@
+import shutil
+from plus.dependence import Dependence
+from plus.config import Config
 from typing import List
-from .config import Config
+
 import subprocess
 import os
 
@@ -12,11 +15,13 @@ class CompilationResult:
         self.output = output
 
 class SourceCompiler:
-    def __init__(self, cxx='', cxxflags=[], libs=[], includes=[]):
+    def __init__(self, cxx='', cxxflags=[], libdirs=[], includes=[], libs=[], dlls=[]):
         self.cxx = cxx
         self.cxxflags = cxxflags
-        self.libs = libs
+        self.libdirs = libdirs
         self.includes = includes
+        self.libs = libs
+        self.dlls = dlls
 
     def compile(self, src: str, dest: str, release=False) -> CompilationResult:
         if not os.path.exists(dest):
@@ -24,7 +29,9 @@ class SourceCompiler:
         
         obj = os.path.join(dest, os.path.splitext(os.path.basename(src))[0] + '.o')
 
-        result = subprocess.run([self.cxx, *self.cxxflags, *self.includes, '-c', src, '-o', obj])
+        includes = [f'-I{i}' for i in self.includes]
+
+        result = subprocess.run([self.cxx, *self.cxxflags, *includes, '-c', src, '-o', obj])
 
         if result.returncode != 0:
             return CompilationResult(False, result.returncode, result.stderr, result.stdout, obj)
@@ -32,11 +39,17 @@ class SourceCompiler:
         return CompilationResult(True, 0, '', '', obj)
     
     def link(self, objs: List[str], dest: str, release=False) -> CompilationResult:
-        result = subprocess.run([self.cxx, *self.cxxflags, *self.libs, '-o', dest, *objs])
+        libdirs = [f'-L{l}' for l in self.libdirs]
+        libs = [f'-l{l}' for l in self.libs]
+
+        result = subprocess.run([self.cxx, '-o', dest, *objs, *libs, *libdirs, *self.cxxflags])
 
         if result.returncode != 0:
             return CompilationResult(False, result.returncode, result.stderr, result.stdout, dest)
         
+        for dll in self.dlls:
+            shutil.copy(dll, os.path.dirname(dest))
+
         return CompilationResult(True, 0, '', '', dest)
 
     @staticmethod
@@ -51,19 +64,26 @@ class SourceCompiler:
             config['standard'] = 'c++17'
             config.save()
         
-        includes = []
+        includes = config.get('includes', [])
+        libdirs = config.get('libdirs', [])
+        libs = config.get('libs', [])
+        dlls = config.get('dlls', [])
 
-        if 'includes' in config:
-            includes = config['includes']
-        
-        libs = []
-
-        if 'libs' in config:
-            libs = config['libs']
+        if 'requires' in config:
+            deps = config.get('dependencies', {})
+            for req in config['requires']:
+                if req in deps:
+                    dependence = Dependence(req, deps[req], '.')
+                    includes += dependence.includes
+                    libdirs += dependence.libdirs
+                    libs += dependence.libs
+                    dlls += dependence.dlls
         
         return SourceCompiler(
             cxx=config['compiler'],
             cxxflags=['-std=' + config['standard'], '-Wall', '-Wextra', '-pedantic'],
+            includes=includes,
+            libdirs=libdirs,
             libs=libs,
-            includes=includes
+            dlls=dlls
         )
