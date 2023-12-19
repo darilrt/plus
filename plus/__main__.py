@@ -1,4 +1,4 @@
-from .actions import init_project, build_project, run_project, install_project
+from .actions import init_project, build_project, run_project, install_project, new_project
 
 import argparse
 
@@ -37,6 +37,14 @@ def main():
     # install subparser
     install_parser = subparsers.add_parser('install', help='install all dependencies of the current project')
     install_parser.set_defaults(func=install_project)
+
+    # new subparser
+    new_parser = subparsers.add_parser('new', help='create a new c++ file in the current project, by default creates a header and source file')
+    new_parser.add_argument('new_name', help='file path and name (without extension) to create (e.g. test/main)')
+    new_parser.add_argument('-H', '--header', action='store_true', help='create header file')
+    new_parser.add_argument('-s', '--source', action='store_true', help='create source file')
+    new_parser.add_argument('-o', '--overwrite', action='store_true', help='overwrite existing file')
+    new_parser.set_defaults(func=new_project)
 
     args = parser.parse_args()
     

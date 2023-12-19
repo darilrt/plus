@@ -57,24 +57,24 @@ class SourceCompiler:
 
     @staticmethod
     def from_config(config: Config) -> 'SourceCompiler':
-        if not 'compiler' in config or config['compiler'] == '':
+        if not 'cxx' in config['compiler'] or config['compiler']['cxx'] == '':
             print("No compiler set, defaulting to g++")
-            config['compiler'] = 'g++'
+            config['compiler']['cxx'] = 'g++'
             config.save()
 
-        if not 'standard' in config or config['standard'] == '':
+        if not 'standard' in config['compiler'] or config['compiler']['standard'] == '':
             print("No standard set, defaulting to c++17")
-            config['standard'] = 'c++17'
+            config['compiler']['standard'] = 'c++17'
             config.save()
         
-        includes = config.get('includes', [])
-        libdirs = config.get('libdirs', [])
-        libs = config.get('libs', [])
-        binaries = config.get('binaries', [])
-        defines = config.get('defines', [])
+        includes = config['compiler'].get('includes', [])
+        libdirs = config['compiler'].get('libdirs', [])
+        libs = config['compiler'].get('libs', [])
+        binaries = config['compiler'].get('binaries', [])
+        defines = config['compiler'].get('defines', [])
 
         if 'requires' in config:
-            deps = config.get('dependencies', {})
+            deps = config.get('deps', {})
             for req in config['requires']:
                 if req in deps:
                     dependence = Dependence(req, deps[req], '.')
@@ -85,8 +85,8 @@ class SourceCompiler:
                     defines += dependence.defines
         
         return SourceCompiler(
-            cxx=config['compiler'],
-            cxxflags=['-std=' + config['standard'], '-Wall', '-Wextra', '-pedantic'],
+            cxx=config['compiler']['cxx'],
+            cxxflags=['-std=' + config['compiler']['standard'], '-Wall', '-Wextra', '-pedantic'],
             includes=includes,
             libdirs=libdirs,
             libs=libs,

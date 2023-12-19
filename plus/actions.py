@@ -31,3 +31,15 @@ def install_project(args):
     project = Project('.')
     project.validate()
     project.install_requirements()
+
+def new_project(args):
+    project = Project('test')
+    project.validate()
+
+    if args.source:
+        project.new_source(args.new_name, overwrite=args.overwrite)
+    elif args.header:
+        project.new_header(args.new_name, overwrite=args.overwrite)
+    else:
+        project.new_source(args.new_name, overwrite=args.overwrite)
+        project.new_header(args.new_name, overwrite=args.overwrite)

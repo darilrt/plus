@@ -4,7 +4,7 @@ from .lockfile import LockFile
 from .dependence import Dependence
 
 import os
-import json
+import toml
 
 def exit(message: str=None):
     if message:
@@ -23,23 +23,23 @@ class Project:
         self.path = path
         self.fullpath = os.path.abspath(path)
         self.name = os.path.basename(path)
-        self.config = Config(self.fullpath + '/project.json', type=type)
+        self.config = Config(self.fullpath + '/project.toml', type=type)
         self.lock = LockFile(self.fullpath + '/project.lock')
 
         if not self.config.is_valid:
-            exit('project.json is not valid')
+            exit('project.toml is not valid')
     
     def validate(self):
         if not os.path.exists(self.path):
             exit(self.path + ' does not exist')
     
-        if not os.path.exists(os.path.join(self.path, 'project.json')):
-            exit('project.json does not exist')
+        if not os.path.exists(os.path.join(self.path, 'project.toml')):
+            exit('project.toml does not exist')
         
         if not self.config.is_valid:
-            exit('project.json is not valid')
+            exit('project.toml is not valid')
         
-        if 'name' not in self.config:
+        if 'name' not in self.config["project"]:
             exit('Project name not found')
 
         self.lock.load()
@@ -60,25 +60,25 @@ class Project:
         with open(os.path.join(self.path, '.gitignore'), 'w') as f:
             f.write(GITIGNORE)
         
-        if self.config['type'] == 'console-app' or self.config['type'] == 'app':
+        if self.config["compiler"]['type'] == 'console-app' or self.config['type'] == 'app':
             with open(os.path.join(self.path, 'src', 'main.cpp'), 'w') as f:
                 f.write(MAIN_APP)
-        elif self.config['type'] == 'static-lib':
+        elif self.config["compiler"]['type'] == 'static-lib':
             with open(os.path.join(self.path, 'src', 'lib.cpp'), 'w') as f:
                 f.write(MAIN_LIB)
             with open(os.path.join(self.path, 'include', 'lib.h'), 'w') as f:
                 f.write(MAIN_LIB_H)
-        elif self.config['type'] == 'shared-lib':
+        elif self.config["compiler"]['type'] == 'shared-lib':
             with open(os.path.join(self.path, 'src', 'lib.cpp'), 'w') as f:
                 f.write(MAIN_SHARED_LIB)
             with open(os.path.join(self.path, 'include', 'lib.h'), 'w') as f:
                 f.write(MAIN_SHARED_LIB_H)
         
-        self.config['name'] = self.name
+        self.config["compiler"]['name'] = self.name
         self.config.save()
 
     def build(self, release=False):
-        if 'name' not in self.config:
+        if 'name' not in self.config["project"]:
             exit('Project name not found')
 
         oldcwd = os.getcwd()
@@ -119,12 +119,12 @@ class Project:
         
         compile_dir('src', 'obj', release=release)
 
-        if self.config['type'] == 'console-app' or self.config['type'] == 'app':
+        if self.config["compiler"]['type'] == 'console-app' or self.config["compiler"]['type'] == 'app':
             bindir = 'bin'
 
             result = compiler.link(
                 objects, 
-                os.path.join(bindir, self.config['name']),
+                os.path.join(bindir, self.config["compiler"]['name']),
                 release=release
             )
 
@@ -133,17 +133,17 @@ class Project:
             if not result.success:
                 exit(result.returncode)
             
-            print('\033[32m\u2713\033[0m compiled', self.config['name'])
+            print('\033[32m\u2713\033[0m compiled', self.config["compiler"]['name'])
             
             self.lock.save()
         
         os.chdir(oldcwd)
 
     def run(self, release=False):
-        if self.config['type'] == 'console-app' or self.config['type'] == 'app':
+        if self.config["compiler"]['type'] == 'console-app' or self.config["compiler"]['type'] == 'app':
             self.build(release=release)
-            print("Running", self.config['name'] + "...")
-            os.system(os.path.join(self.path, 'bin', self.config['name']))
+            print("Running", self.config["compiler"]['name'] + "...")
+            os.system(os.path.join(self.path, 'bin', self.config["compiler"]['name']))
         else:
             print("Project is not an app, cannot run")
 
@@ -154,14 +154,33 @@ class Project:
         for requirement in self.config['requires']:
             print('Installing', requirement)
 
-            if requirement in self.config['dependencies']:
+            if requirement in self.config['deps']:
                 dependence = Dependence(
                     requirement,
-                    self.config['dependencies'][requirement],
+                    self.config['deps'][requirement],
                     self.path
                 )
                 dependence.resolve()
 
+    def new_source(self, name: str, overwrite=False):
+        if os.path.exists(os.path.join(self.path, 'src', name + '.cpp')):
+            if not overwrite:
+                exit(f'File {name}.cpp already exists')
+        
+        with open(os.path.join(self.path, 'src', name + '.cpp'), 'w+') as f:
+            f.write('')
+        
+        print('\033[32m\u2713\033[0m created', os.path.join('src', name + '.cpp'))
+
+    def new_header(self, name: str, overwrite=False):
+        if os.path.exists(os.path.join(self.path, 'include', name + '.h')):
+            if not overwrite:
+                exit(f'File {name}.h already exists')
+        
+        with open(os.path.join(self.path, 'include', name + '.h'), 'w+') as f:
+            f.write('#pragma once\n')
+        
+        print('\033[32m\u2713\033[0m created', os.path.join('include', name + '.h'))
 
 GITIGNORE = '''\
 # Compiled Object files
