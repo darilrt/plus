@@ -13,9 +13,9 @@ plus is a simple command line tool to manage c++ projects.
 - [x] Custom dependencies
 - [x] Custom build commands
 - [x] Build console application
-- [] Build static library
-- [] Build shared library
-- [] Build application without console
+- [ ] Build static library
+- [ ] Build shared library
+- [ ] Build application without console
 
 ## Requirements
 
