@@ -98,22 +98,23 @@ class Project:
                     )
                 
                 elif file.endswith('.cpp'):
-                    file_path = os.path.join(path, file)
+                    file_path = os.path.join(path, file).replace('\\', '/')
                     stamp = os.path.getmtime(file_path)
 
                     if file_path in self.lock.files:
                         if self.lock.files[file_path]['stamp'] == stamp:
                             if 'object' in self.lock.files[file_path]:
-                                objects.append(self.lock.files[file_path]['object'])
+                                objects.append(self.lock.files[file_path]['object'].replace('\\', '/'))
                                 continue
 
                     result = compiler.compile(file_path, dest, release=release)
 
                     if not result.success:
-                        exit(result.returncode)
+                        print('\033[31m\u2717\033[0m', os.path.join(path, file))
+                        exit()
 
                     objects.append(result.output)
-                    self.lock.add_file(file_path, object=result.output)
+                    self.lock.add_file(file_path, object=result.output.replace('\\', '/'))
                     
                     print('\033[32m\u2713\033[0m', os.path.join(path, file))
         
@@ -123,7 +124,7 @@ class Project:
             bindir = 'bin'
 
             result = compiler.link(
-                objects, 
+                objects,
                 os.path.join(bindir, self.config["compiler"]['name']),
                 release=release
             )
@@ -131,7 +132,7 @@ class Project:
             compiler.copy_binaries(bindir)
 
             if not result.success:
-                exit(result.returncode)
+                exit()
             
             print('\033[32m\u2713\033[0m compiled', self.config["compiler"]['name'])
             

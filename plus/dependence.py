@@ -9,11 +9,11 @@ class Dependence:
         self._info = info
         self.name = name
         self.path = path
-        self.includes = info["compiler"].get('includes', [])
-        self.libdirs = info["compiler"].get('libdirs', [])
-        self.libs = info["compiler"].get('libs', "")
-        self.binaries = info["compiler"].get('binaries', [])
-        self.defines = info["compiler"].get('defines', [])
+        self.includes = info.get('includes', [])
+        self.libdirs = info.get('libdirs', [])
+        self.libs = info.get('libs', "")
+        self.binaries = info.get('binaries', [])
+        self.defines = info.get('defines', [])
 
         self.override_by_platform()
         self.normalize_paths()

@@ -52,7 +52,14 @@ class SourceCompiler:
         return CompilationResult(True, 0, '', '', dest)
 
     def copy_binaries(self, bindir: str):
+        if not os.path.exists(bindir):
+            os.mkdir(bindir)
+        
         for binary in self.binaries:
+            if not os.path.exists(binary):
+                print(f'Binary {binary} does not exist')
+                continue
+
             shutil.copy(binary, bindir)
 
     @staticmethod

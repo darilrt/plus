@@ -6,7 +6,7 @@ class LockFile:
         self._path = path
         self.is_valid = False
         self.files = {}
-        self.dependencies = {}
+        self.deps = {}
         
     def load(self):
         if os.path.exists(self._path):
@@ -22,14 +22,14 @@ class LockFile:
             self.is_valid = True
             return
         
-        self.files = data['files']
-        self.dependencies = data['dependencies']
+        self.files = data.get('files', {})
+        self.dependencies = data.get('deps', {})
     
     def save(self):
         with open(self._path, 'w') as f:
             toml.dump({
                 'files': self.files,
-                'dependencies': self.dependencies
+                'deps': self.dependencies
             }, f)
     
     def add_file(self, file: str, object=None):
