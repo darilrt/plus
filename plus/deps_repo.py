@@ -44,7 +44,7 @@ class DepRepository:
         self._load()
 
         print('Done')
-    
+
     def get(self, key: str, default: any) -> any:
         return self._deps.get(key, default)
     

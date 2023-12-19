@@ -4,6 +4,7 @@ from .actions import run_project
 from .actions import install_project
 from .actions import new_project
 from .actions import upgrade_project
+from .actions import add_project
 
 import argparse
 
@@ -54,6 +55,11 @@ def main():
     # upgrade subparser
     upgrade_parser = subparsers.add_parser('upgrade', help='upgrade the plus repository')
     upgrade_parser.set_defaults(func=upgrade_project)
+
+    # add subparsers
+    add_parser = subparsers.add_parser('add', help='add a dependency to the current project')
+    add_parser.add_argument('add_name', help='dependency name')
+    add_parser.set_defaults(func=add_project)
     
     args = parser.parse_args()
     

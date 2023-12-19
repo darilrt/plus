@@ -48,3 +48,8 @@ def new_project(args):
 def upgrade_project(args):
     dep = DepRepository()
     dep.upgrade()
+
+def add_project(args):
+    project = Project('.')
+    project.validate()
+    project.add_dep(args.add_name)
