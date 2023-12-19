@@ -185,7 +185,13 @@ class Project:
             if not overwrite:
                 exit(f'File {name}.cpp already exists')
         
-        with open(os.path.join(self.path, 'src', name + '.cpp'), 'w+') as f:
+        path: str = os.path.join(self.path, 'src', name + '.cpp')
+        basedir: str = os.path.dirname(path)
+
+        if not os.path.exists(basedir):
+            os.makedirs(basedir)
+
+        with open(path, 'w+') as f:
             f.write('')
         
         print('\033[32m\u2713\033[0m created', os.path.join('src', name + '.cpp'))
@@ -194,8 +200,14 @@ class Project:
         if os.path.exists(os.path.join(self.path, 'include', name + '.h')):
             if not overwrite:
                 exit(f'File {name}.h already exists')
+
+        path: str = os.path.join(self.path, 'include', name + '.h')
+        basedir: str = os.path.dirname(path)
+
+        if not os.path.exists(basedir):
+            os.makedirs(basedir)
         
-        with open(os.path.join(self.path, 'include', name + '.h'), 'w+') as f:
+        with open(path, 'w+') as f:
             f.write('#pragma once\n')
         
         print('\033[32m\u2713\033[0m created', os.path.join('include', name + '.h'))

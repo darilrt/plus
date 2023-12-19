@@ -11,6 +11,11 @@ plus is a simple command line tool to manage c++ projects.
 - [x] Add a new header file
 - [x] Manage dependencies
 - [x] Custom dependencies
+- [x] Custom build commands
+- [x] Build console application
+- [] Build static library
+- [] Build shared library
+- [] Build application without console
 
 ## Requirements
 

@@ -34,7 +34,7 @@ def install_project(args):
     project.install_requirements()
 
 def new_project(args):
-    project = Project('test')
+    project = Project('.')
     project.validate()
 
     if args.source:
