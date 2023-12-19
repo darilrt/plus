@@ -1,4 +1,4 @@
-# plus
+# +plus
 
 plus is a simple command line tool to manage c++ projects.
 
