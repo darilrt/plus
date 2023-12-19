@@ -23,7 +23,7 @@ class Config:
                 "libdirs": [],
                 "libs": [],
             },
-            "requires": [],
+            "requires": {},
         }
 
         if os.path.exists(self._path):

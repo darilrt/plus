@@ -10,6 +10,12 @@ $ cd plus
 $ python3 setup.py install
 ```
 
+## Requirements
+
+- python3
+- git
+- g++
+
 ## Usage
 
 ```bash
