@@ -220,6 +220,7 @@ class Project:
             exit('Requirement already exists')
 
         dep_repo = DepRepository()
+        dep_repo.upgrade()
 
         if name not in dep_repo and name not in self.config.get('deps', {}):
             exit('Dependence not found')
