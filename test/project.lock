@@ -1,9 +1,0 @@
-{
-    "files": {
-        "src\\main.cpp": {
-            "stamp": 1702949526.7918293,
-            "object": "obj\\main.o"
-        }
-    },
-    "dependencies": {}
-}

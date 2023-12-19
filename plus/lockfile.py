@@ -1,4 +1,4 @@
-import json
+import toml
 import os
 
 class LockFile:
@@ -12,7 +12,7 @@ class LockFile:
         if os.path.exists(self._path):
             with open(self._path, 'r') as f:
                 try:
-                    data = json.load(f)
+                    data = toml.load(f)
                     self.is_valid = True
                 except:
                     print('Invalid lock file')
@@ -27,10 +27,10 @@ class LockFile:
     
     def save(self):
         with open(self._path, 'w') as f:
-            json.dump({
+            toml.dump({
                 'files': self.files,
                 'dependencies': self.dependencies
-            }, f, indent=4)
+            }, f)
     
     def add_file(self, file: str, object=None):
         self.files[file] = {
