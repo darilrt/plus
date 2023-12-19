@@ -1,9 +1,10 @@
-import shutil
+from plus.deps_repo import DepRepository
 from plus.dependence import Dependence
 from plus.config import Config
 from typing import List
 
 import subprocess
+import shutil
 import os
 
 class CompilationResult:
@@ -80,11 +81,21 @@ class SourceCompiler:
         binaries = config['compiler'].get('binaries', [])
         defines = config['compiler'].get('defines', [])
 
+        dep_repo = DepRepository()
+
         if 'requires' in config:
             deps = config.get('deps', {})
             for req in config['requires']:
                 if req in deps:
                     dependence = Dependence(req, deps[req], '.')
+                    includes += dependence.includes
+                    libdirs += dependence.libdirs
+                    libs += dependence.libs
+                    binaries += dependence.binaries
+                    defines += dependence.defines
+                
+                elif req in dep_repo:
+                    dependence = Dependence(req, dep_repo[req], '.')
                     includes += dependence.includes
                     libdirs += dependence.libdirs
                     libs += dependence.libs

@@ -1,4 +1,9 @@
-from .actions import init_project, build_project, run_project, install_project, new_project
+from .actions import init_project
+from .actions import build_project
+from .actions import run_project
+from .actions import install_project
+from .actions import new_project
+from .actions import upgrade_project
 
 import argparse
 
@@ -46,6 +51,10 @@ def main():
     new_parser.add_argument('-o', '--overwrite', action='store_true', help='overwrite existing file')
     new_parser.set_defaults(func=new_project)
 
+    # upgrade subparser
+    upgrade_parser = subparsers.add_parser('upgrade', help='upgrade the plus repository')
+    upgrade_parser.set_defaults(func=upgrade_project)
+    
     args = parser.parse_args()
     
     if hasattr(args, 'func'):

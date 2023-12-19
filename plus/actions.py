@@ -1,4 +1,5 @@
 from .project import Project
+from .deps_repo import DepRepository
 import os
 
 def init_project(args):
@@ -43,3 +44,7 @@ def new_project(args):
     else:
         project.new_source(args.new_name, overwrite=args.overwrite)
         project.new_header(args.new_name, overwrite=args.overwrite)
+    
+def upgrade_project(args):
+    dep = DepRepository()
+    dep.upgrade()
