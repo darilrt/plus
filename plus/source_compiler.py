@@ -41,7 +41,7 @@ class SourceCompiler:
         
         return CompilationResult(True, 0, '', '', obj)
     
-    def link(self, objs: List[str], dest: str, release=False) -> CompilationResult:
+    def link(self, objs: List[str], dest: str, release=False, mwindow=False) -> CompilationResult:
         libdirs = [f'-L{l}' for l in self.libdirs]
         libs = [f'-l{l}' for l in self.libs]
 

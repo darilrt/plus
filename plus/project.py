@@ -49,8 +49,8 @@ class Project:
 
     def create(self, ignore_exists=True):
         if os.path.exists(self.path):
-            if not ignore_exists:
-                exit('Project already exists')
+            if os.listdir(self.path) != []:
+                exit('Directory is not empty')
         else:
             os.mkdir(self.path)
 
@@ -74,7 +74,7 @@ class Project:
             with open(os.path.join(self.path, 'include', 'lib.h'), 'w') as f:
                 f.write(MAIN_SHARED_LIB_H)
         
-        self.config["compiler"]['name'] = self.name
+        self.config['project']['name'] = self.name
         self.config.save()
 
     def build(self, release=False):
@@ -129,7 +129,8 @@ class Project:
             result = compiler.link(
                 objects,
                 os.path.join(bindir, self.config['project']['name']),
-                release=release
+                release=release,
+                mwindow=self.config['compiler']['type'] == 'app'
             )
 
             compiler.copy_binaries(bindir)
@@ -159,7 +160,7 @@ class Project:
         if self.config['compiler']['type'] == 'console-app' or self.config['compiler']['type'] == 'app':
             self.build(release=release)
             print("Running", self.config['project']['name'] + "...")
-            os.system(os.path.join(self.path, 'bin', self.config['compiler']['name']))
+            os.system(os.path.join(self.path, 'bin', self.config['project']['name']))
         else:
             print("Project is not an app, cannot run")
 

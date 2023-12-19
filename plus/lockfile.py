@@ -29,7 +29,7 @@ class LockFile:
         with open(self._path, 'w') as f:
             toml.dump({
                 'files': self.files,
-                'deps': self.dependencies
+                'deps': self.deps
             }, f)
     
     def add_file(self, file: str, object=None):

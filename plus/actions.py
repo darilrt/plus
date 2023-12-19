@@ -11,9 +11,6 @@ def init_project(args):
         type = 'static-lib'
     elif args.shared_lib:
         type = 'shared-lib'
-
-    if os.path.exists(args.init_name):
-        exit('Project already exists')
     
     project = Project(args.init_name, type=type)
     project.create()
