@@ -201,6 +201,9 @@ class Project:
         print('\033[32m\u2713\033[0m created', os.path.join('include', name + '.h'))
 
     def add_dep(self, name: str):
+        if 'requires' not in self.config:
+            self.config['requires'] = {}
+
         if name in self.config['requires']:
             exit('Requirement already exists')
 
@@ -215,7 +218,7 @@ class Project:
 
             self.config['deps'][name] = dep_repo[name]
         
-        self.config['requires'].append(name)
+        self.config['requires'][name] = '*'
         self.config.save()
 
         dep = Dependence(name, self.config['deps'][name], self.path)

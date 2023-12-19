@@ -56,7 +56,8 @@ class Dependence:
             os.mkdir('vendor')
         os.chdir('vendor')
         shutil.rmtree(self.name, ignore_errors=True)
-        os.mkdir(self.name)
+        if not os.path.exists(self.name):
+            os.mkdir(self.name)
         os.chdir(self.name)
 
         for step in build:
