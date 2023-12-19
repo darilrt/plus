@@ -2,7 +2,6 @@ import os
 import platform
 import shutil
 import subprocess
-import sys
 
 class Dependence:
     def __init__(self, name: str, info: dict, path: str):

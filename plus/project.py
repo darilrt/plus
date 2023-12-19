@@ -5,7 +5,6 @@ from .lockfile import LockFile
 from .dependence import Dependence
 
 import os
-import toml
 
 def exit(message: str=None):
     if message:
@@ -79,6 +78,9 @@ class Project:
         self.config.save()
 
     def build(self, release=False):
+        if not 'project' in self.config:
+            exit('[project] section not found')
+
         if 'name' not in self.config["project"]:
             exit('Project name not found')
 
@@ -121,12 +123,12 @@ class Project:
         
         compile_dir('src', 'obj', release=release)
 
-        if self.config["compiler"]['type'] == 'console-app' or self.config["compiler"]['type'] == 'app':
+        if self.config['compiler']['type'] == 'console-app' or self.config['compiler']['type'] == 'app':
             bindir = 'bin'
 
             result = compiler.link(
                 objects,
-                os.path.join(bindir, self.config["compiler"]['name']),
+                os.path.join(bindir, self.config['project']['name']),
                 release=release
             )
 
@@ -135,17 +137,29 @@ class Project:
             if not result.success:
                 exit()
             
-            print('\033[32m\u2713\033[0m compiled', self.config["compiler"]['name'])
+            print('\033[32m\u2713\033[0m compiled', self.config['project']['name'])
             
             self.lock.save()
         
         os.chdir(oldcwd)
 
     def run(self, release=False):
-        if self.config["compiler"]['type'] == 'console-app' or self.config["compiler"]['type'] == 'app':
+        if not 'compiler' in self.config:
+            exit('[compiler] section not found')
+        
+        if 'project' not in self.config:
+            exit('[project] section not found')
+        
+        if 'name' not in self.config['project']:
+            exit('Project name not found')
+        
+        if 'type' not in self.config['compiler']:
+            exit('Compilation type not found')
+
+        if self.config['compiler']['type'] == 'console-app' or self.config['compiler']['type'] == 'app':
             self.build(release=release)
-            print("Running", self.config["compiler"]['name'] + "...")
-            os.system(os.path.join(self.path, 'bin', self.config["compiler"]['name']))
+            print("Running", self.config['project']['name'] + "...")
+            os.system(os.path.join(self.path, 'bin', self.config['compiler']['name']))
         else:
             print("Project is not an app, cannot run")
 

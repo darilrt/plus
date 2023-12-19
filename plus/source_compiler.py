@@ -65,6 +65,9 @@ class SourceCompiler:
 
     @staticmethod
     def from_config(config: Config) -> 'SourceCompiler':
+        if not 'compiler' in config:
+            config['compiler'] = {}
+
         if not 'cxx' in config['compiler'] or config['compiler']['cxx'] == '':
             print("No compiler set, defaulting to g++")
             config['compiler']['cxx'] = 'g++'
