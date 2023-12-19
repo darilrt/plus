@@ -152,11 +152,27 @@ class Project:
     def install_requirements(self):
         if 'requires' not in self.config:
             return
+        
+        if 'deps' not in self.config:
+            self.config['deps'] = {}
+
+        dep_repo = DepRepository()
 
         for requirement in self.config['requires']:
             print('Installing', requirement)
 
             if requirement in self.config['deps']:
+                dependence = Dependence(
+                    requirement,
+                    self.config['deps'][requirement],
+                    self.path
+                )
+                dependence.resolve()
+            
+            elif requirement in dep_repo:
+                self.config['deps'][requirement] = dep_repo[requirement]
+                self.config.save()
+                
                 dependence = Dependence(
                     requirement,
                     self.config['deps'][requirement],
