@@ -7,6 +7,7 @@ class LockFile:
         self.is_valid = False
         self.files = {}
         self.deps = {}
+        self.subproject = {}
         
     def load(self):
         if os.path.exists(self._path):
@@ -23,13 +24,15 @@ class LockFile:
             return
         
         self.files = data.get('files', {})
-        self.dependencies = data.get('deps', {})
+        self.deps = data.get('deps', {})
+        self.subproject = data.get('subproject', {})
     
     def save(self):
         with open(self._path, 'w') as f:
             toml.dump({
                 'files': self.files,
-                'deps': self.deps
+                'deps': self.deps,
+                'subproject': self.subproject
             }, f)
     
     def add_file(self, file: str, object=None):
@@ -38,5 +41,27 @@ class LockFile:
             'object': object
         }
     
-    def get_file(self, file: str) -> dict:
-        return self.files[file]
+    def add_dep(self, dep: str, version: str):
+        self.deps[dep] = version
+
+    def get_dep(self, dep: str) -> str:
+        return self.deps[dep]
+    
+    def get_deps(self) -> dict:
+        return self.deps
+    
+    def get_files(self) -> dict:
+        return self.files
+    
+    def add_subproject(self, subproject: str, stamp: int):
+        self.subproject[subproject] = { 'stamp': stamp }
+
+    def get_subproject(self, subproject: str) -> dict:
+        return self.subproject[subproject]
+    
+    def get_subprojects(self) -> dict:
+        return self.subproject
+
+    def in_subproject(self, subproject: str) -> bool:
+        return subproject in self.subproject
+    

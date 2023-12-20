@@ -1,0 +1,11 @@
+[deps]
+
+[files."src/main.cpp"]
+stamp = 1703110332.70846
+object = "obj/main.o"
+
+[subproject.a]
+stamp = 1703111549.5959039
+
+[subproject.b]
+stamp = 1703111550.1594572

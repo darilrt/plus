@@ -1,4 +1,5 @@
 from plus.deps_repo import DepRepository
+from plus.subprojects import Subprojects
 from .config import Config
 from .source_compiler import SourceCompiler
 from .lockfile import LockFile
@@ -81,6 +82,9 @@ class Project:
 
         if 'name' not in self.config["project"]:
             exit('Project name not found')
+
+        subprojects = Subprojects(self.config, self.lock, self.path)
+        subprojects.build()
 
         oldcwd = os.getcwd()
         os.chdir(self.path)

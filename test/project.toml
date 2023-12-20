@@ -1,0 +1,20 @@
+[project]
+name = "test"
+version = "0.1.0"
+description = ""
+author = ""
+email = ""
+url = ""
+license = ""
+
+[compiler]
+type = "console-app"
+cxx = "g++"
+standard = "c++17"
+includes = ["include"]
+libdirs = []
+libs = []
+
+[subprojects]
+a = { path = "a" }
+b = { path = "b" }

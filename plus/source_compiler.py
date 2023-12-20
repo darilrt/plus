@@ -62,7 +62,6 @@ class SourceCompiler:
             *self.cxxflags
         ]
 
-        print(" ".join(cmd))
         result = subprocess.run(cmd)
 
         if result.returncode != 0:
@@ -146,22 +145,15 @@ class SourceCompiler:
         if 'requires' in config:
             deps = config.get('deps', {})
             for req in config['requires']:
-                if req in deps:
-                    dependence = Dependence(req, deps[req], '.')
+                if req in deps or req in dep_repo:
+                    dependencies = deps[req] if req in deps else dep_repo[req]
+                    dependence = Dependence(req, dependencies, '.')
                     includes += dependence.includes
                     libdirs += dependence.libdirs
                     libs += dependence.libs
                     binaries += dependence.binaries
                     defines += dependence.defines
                 
-                elif req in dep_repo:
-                    dependence = Dependence(req, dep_repo[req], '.')
-                    includes += dependence.includes
-                    libdirs += dependence.libdirs
-                    libs += dependence.libs
-                    binaries += dependence.binaries
-                    defines += dependence.defines
-        
         return SourceCompiler(
             cxx=config['compiler']['cxx'],
             cxxflags=['-std=' + config['compiler']['standard'], '-Wall', '-Wextra', '-pedantic'],
