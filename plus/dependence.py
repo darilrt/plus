@@ -1,13 +1,29 @@
 import os
+from pathlib import Path
 import platform
 import shutil
+import stat
 import subprocess
+
+def rmdir(path: str):
+    def readonly_to_writable(foo, file, err):
+        if Path(file).suffix in ['.idx', '.pack'] and 'PermissionError' == err[0].__name__:
+            os.chmod(file, stat.S_IWRITE)
+            foo(file)
+
+    shutil.rmtree(path, onerror=readonly_to_writable)
+
+def cd_and_mkdir(path: str):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    os.chdir(path)
 
 class Dependence:
     def __init__(self, name: str, info: dict, path: str):
         self._info = info
         self.name = name
         self.path = path
+        self.git = info.get('git', None)
         self.includes = info.get('includes', [])
         self.libdirs = info.get('libdirs', [])
         self.libs = info.get('libs', "")
@@ -38,6 +54,11 @@ class Dependence:
         self.binaries = [os.path.join(vendor_path, b) for b in self.binaries]
 
     def resolve(self):
+        if self.git:
+            self._resolve_git()
+        else:
+            self._resolve_build()
+
         current_platform = platform.system().lower()
 
         build = self._info.get('build', [])
@@ -50,14 +71,15 @@ class Dependence:
             
         oldcwd = os.getcwd()
 
-        os.chdir(self.path)
-        if not os.path.exists('vendor'):
-            os.mkdir('vendor')
-        os.chdir('vendor')
-        shutil.rmtree(self.name, ignore_errors=True)
-        if not os.path.exists(self.name):
-            os.mkdir(self.name)
-        os.chdir(self.name)
+        if self.git:
+            os.chdir(self.path + '/vendor/' + self.name)
+
+        else:    
+            cd_and_mkdir(self.path + '/vendor')
+            rmdir(self.name)
+            if not os.path.exists(self.name):
+                os.mkdir(self.name)
+            os.chdir(self.name)
 
         for step in build:
             try:
@@ -70,3 +92,29 @@ class Dependence:
         print('\033[32m\u2713\033[0m built', self.name)
 
         os.chdir(oldcwd)
+    
+    def _resolve_git(self):
+        if not shutil.which('git'):
+            print('\033[31m\u2717\033[0m git not found')
+            exit(1)
+        
+        oldcwd = os.getcwd()
+
+        cd_and_mkdir(self.path + '/vendor')
+        print(self.path + '/vendor')
+        rmdir(self.name)
+
+        result = subprocess.run(['git', 'clone', self.git, self.name])
+
+        if result.returncode != 0:
+            print('\033[31m\u2717\033[0m failed to clone', self.name)
+            exit()
+
+        os.chdir(self.name)
+
+        print('\033[32m\u2713\033[0m cloned', self.name)
+
+        os.chdir(oldcwd)
+
+    def _resolve_build(self):
+        pass
