@@ -13,8 +13,6 @@ def exit(message: str=None):
 
 class Project:
     folders = [
-        'bin',
-        'obj',
         'include',
         'src',
     ]
@@ -121,26 +119,43 @@ class Project:
                     
                     print('\033[32m\u2713\033[0m', os.path.join(path, file))
         
+        if not os.path.exists('obj'):
+            os.mkdir('obj')
+
         compile_dir('src', 'obj', release=release)
+
+        if not 'type' in self.config['compiler']:
+            exit('Compilation type not found')
 
         if self.config['compiler']['type'] == 'console-app' or self.config['compiler']['type'] == 'app':
             bindir = 'bin'
+            dest = os.path.join(bindir, self.config['project']['name'])
 
             result = compiler.link(
                 objects,
-                os.path.join(bindir, self.config['project']['name']),
+                dest,
                 release=release,
-                mwindow=self.config['compiler']['type'] == 'app'
+                mwindows=self.config['compiler']['type'] == 'app'
+            )
+        else:
+            bindir = 'lib'
+            dest = os.path.join(bindir, self.config['project']['name'])
+
+            result = compiler.link_lib(
+                objects,
+                dest,
+                release=release,
+                shared=self.config['compiler']['type'] == 'shared-lib'
             )
 
-            compiler.copy_binaries(bindir)
+        compiler.copy_binaries(bindir)
 
-            if not result.success:
-                exit()
-            
-            print('\033[32m\u2713\033[0m compiled', self.config['project']['name'])
-            
-            self.lock.save()
+        if not result.success:
+            exit()
+        
+        print('\033[32m\u2713\033[0m compiled', self.config['project']['name'])
+        
+        self.lock.save()
         
         os.chdir(oldcwd)
 

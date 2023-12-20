@@ -19,7 +19,7 @@ class Config:
                 "type": type,
                 "cxx": "g++",
                 "standard": "c++17",
-                "includes": [],
+                "includes": [ "include" ],
                 "libdirs": [],
                 "libs": [],
             },

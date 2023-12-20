@@ -4,6 +4,7 @@ from plus.config import Config
 from typing import List
 
 import subprocess
+import platform
 import shutil
 import os
 
@@ -17,6 +18,7 @@ class CompilationResult:
 
 class SourceCompiler:
     def __init__(self, cxx='', cxxflags=[], libdirs=[], includes=[], libs=[], binaries=[], defines=[]):
+        self.ar = 'ar'
         self.cxx = cxx
         self.cxxflags = cxxflags
         self.libdirs = libdirs
@@ -41,16 +43,71 @@ class SourceCompiler:
         
         return CompilationResult(True, 0, '', '', obj)
     
-    def link(self, objs: List[str], dest: str, release=False, mwindow=False) -> CompilationResult:
+    def link(self, objs: List[str], dest: str, release=False, mwindows=False) -> CompilationResult:
+        if not os.path.exists(os.path.dirname(dest)):
+            os.makedirs(os.path.dirname(dest))
+        
         libdirs = [f'-L{l}' for l in self.libdirs]
         libs = [f'-l{l}' for l in self.libs]
 
-        result = subprocess.run([self.cxx, '-o', dest, *objs, *libs, *libdirs, *self.cxxflags])
+        if mwindows:
+            libs.append('-mwindows')
+
+        cmd = [
+            self.cxx,
+            '-o', dest,
+            *objs,
+            *libdirs,
+            *libs,
+            *self.cxxflags
+        ]
+
+        print(" ".join(cmd))
+        result = subprocess.run(cmd)
 
         if result.returncode != 0:
             return CompilationResult(False, result.returncode, result.stderr, result.stdout, dest)
 
         return CompilationResult(True, 0, '', '', dest)
+
+    def link_lib(self, objs: List[str], dest: str, release=False, shared=False) -> CompilationResult:
+        if not os.path.exists(os.path.dirname(dest)):
+            os.makedirs(os.path.dirname(dest))
+        
+        libdirs = [f'-L{l}' for l in self.libdirs]
+        libs = [f'-l{l}' for l in self.libs]
+
+        ext = '.a' if not shared else '.so'
+
+        if platform.system().lower() == 'windows':
+            ext = '.lib' if not shared else '.dll'
+        elif platform.system().lower() == 'darwin':
+            ext = '.a' if not shared else '.dylib'
+
+        if shared:
+            result = subprocess.run([
+                self.cxx,
+                '-shared',
+                '-o', dest + ext,
+                *objs,
+                *libs,
+                *libdirs,
+                *self.cxxflags
+            ])
+            
+        else:
+            result = subprocess.run([
+                self.ar,
+                'rcs',
+                dest + ext,
+                *objs
+            ])
+
+        if result.returncode != 0:
+            return CompilationResult(False, result.returncode, result.stderr, result.stdout, dest)
+
+        return CompilationResult(True, 0, '', '', dest)
+
 
     def copy_binaries(self, bindir: str):
         if not os.path.exists(bindir):
