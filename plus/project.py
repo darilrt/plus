@@ -18,7 +18,9 @@ class Project:
         if not os.path.exists(self.fullpath):
             os.makedirs(self.fullpath)
 
-        rm = self.config.get_requirement_manager(ignore_deps=self.config.name, root_config=root_config)
+        root_config = self.config if not root_config else root_config
+
+        rm = self.config.get_requirement_manager(ignore_deps=[self.config.name], root_config=root_config)
         if len(rm.requirements) > 0:
             print(f"Building dependencies for {rtext(self.config.name, color=color.green, style=style.bold)}")
             rm.list()
@@ -29,11 +31,11 @@ class Project:
         if not compiler:
             compiler = SourceCompiler.from_config(self.config.dict)
 
-        compiler.includes += rm.includes
-        compiler.libs += rm.libs
-        compiler.libdirs += rm.libdirs
-        compiler.binaries += rm.binaries
-        compiler.defines += rm.defines
+        compiler.includes += list(dict.fromkeys(rm.includes))
+        compiler.libs += list(dict.fromkeys(rm.libs))
+        compiler.libdirs += list(dict.fromkeys(rm.libdirs))
+        compiler.binaries += list(dict.fromkeys(rm.binaries))
+        compiler.defines += list(dict.fromkeys(rm.defines))
 
         self._compile_requirements()
         self._script('pre-build')
@@ -132,10 +134,10 @@ class Project:
 
         if 'linker' in self.config.dict and 'type' in self.config.dict['linker']:
             if self.config.dict['linker']['type'] == 'static-lib':
-                result = compiler.link_lib(objs=objects, dest=f'{self.fullpath}/lib/lib{self.config.name}.a')
+                result = compiler.link_lib(objs=objects, dest=f'{self.fullpath}/lib/lib{self.config.name}')
                 compiler.copy_binaries(bindir=f'{self.fullpath}/lib')
             elif self.config.dict['linker']['type'] == 'shared-lib':
-                result = compiler.link_lib(objs=objects, dest=f'{self.fullpath}/lib/lib{self.config.name}.so', shared=True)
+                result = compiler.link_lib(objs=objects, dest=f'{self.fullpath}/lib/lib{self.config.name}', shared=True)
                 compiler.copy_binaries(bindir=f'{self.fullpath}/lib')
             elif self.config.dict['linker']['type'] == 'console-app':
                 result = compiler.link(objs=objects, dest=f'{self.fullpath}/bin/{self.config.name}')
@@ -164,6 +166,9 @@ class Project:
         if current_platform in config and script in config[current_platform]:
             cmds = config[current_platform][script]
 
+        old_dir = os.getcwd()
+        os.chdir(self.fullpath)
+
         for cmd in cmds:
             try:
                 result = subprocess.run(cmd, shell=True, check=True)
@@ -171,3 +176,5 @@ class Project:
                     exit(f"Build script failed with exit code {result.returncode}")
             except subprocess.CalledProcessError as e:
                 exit(e)
+        
+        os.chdir(old_dir)

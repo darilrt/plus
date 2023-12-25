@@ -38,7 +38,8 @@ class SourceCompiler:
         defines = [f'-D{d}' for d in self.defines]
         warnings = [f'-W{l}' for l in self.warnings]
 
-        result = subprocess.run([self.cxx, '-c', src, '-o', obj, *includes, *defines, *self.cxxflags, *warnings])
+        cmd = [self.cxx, '-c', src, '-o', obj, *includes, *defines, *self.cxxflags, *warnings]
+        result = subprocess.run(cmd)
 
         if result.returncode != 0:
             return CompilationResult(False, result.returncode, result.stderr, result.stdout, obj)
@@ -67,6 +68,7 @@ class SourceCompiler:
         ]
 
         result = subprocess.run(cmd)
+        print(' '.join(cmd))
 
         if result.returncode != 0:
             return CompilationResult(False, result.returncode, result.stderr, result.stdout, dest)
@@ -87,8 +89,15 @@ class SourceCompiler:
         elif platform.system().lower() == 'darwin':
             ext = '.a' if not shared else '.dylib'
 
+        cmd = [
+            self.ar,
+            'rcs',
+            dest + ext,
+            *objs
+        ]
+
         if shared:
-            result = subprocess.run([
+            cmd = [
                 self.cxx,
                 '-shared',
                 '-o', dest + ext,
@@ -96,15 +105,9 @@ class SourceCompiler:
                 *libs,
                 *libdirs,
                 *self.cxxflags
-            ])
-            
-        else:
-            result = subprocess.run([
-                self.ar,
-                'rcs',
-                dest + ext,
-                *objs
-            ])
+            ]
+
+        result = subprocess.run(cmd)
 
         if result.returncode != 0:
             return CompilationResult(False, result.returncode, result.stderr, result.stdout, dest)

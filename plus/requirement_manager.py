@@ -46,16 +46,16 @@ class Requirment:
     
     def is_compiled(self: "Requirment") -> bool:
         if not os.path.exists(self.project.fullpath):
+            self.root_config.lockfile.add_dep(self.name, 0)
             return False
 
-        if self.name not in self.root_config.lockfile.get_deps():
+        if self.name not in self.root_config.lockfile.deps:
             if os.path.exists(self.project.fullpath):
                 rmdir(self.project.fullpath)
 
             return False
 
-        stamp = self.root_config.lockfile.get_dep(self.name)
-        return os.path.getmtime(self.project.fullpath) == stamp
+        return os.path.getmtime(self.project.fullpath) == self.root_config.lockfile.deps[self.name]
 
 class RequirementManager:
     def __init__(self: "RequirementManager", config: "Config", ignore_deps=[], root_config=None) -> None:
@@ -117,27 +117,25 @@ class RequirementManager:
                 config.cxx = self.config.cxx
                 config.standard = self.config.standard
                 
+                current_platform = platform.system().lower()
+
                 if 'compiler' in config.dict:
-                    path = f"vendor/{name}"
                     config.dict['compiler']['includes'] = [f"{path}/{i}" for i in config.dict['compiler'].get('includes', [])]
                     config.dict['compiler']['libdirs'] = [f"{path}/{l}" for l in config.dict['compiler'].get('libdirs', [])]
                     config.dict['compiler']['binaries'] = [f"{path}/{b}" for b in config.dict['compiler'].get('binaries', [])]
 
-                    config.dict['compiler']['windows'] = config.dict['compiler'].get('windows', {})
-                    config.dict['compiler']['windows']['includes'] = [f"{path}/{i}" for i in config.dict['compiler']['windows'].get('includes', [])]
-                    config.dict['compiler']['windows']['libdirs'] = [f"{path}/{l}" for l in config.dict['compiler']['windows'].get('libdirs', [])]
-                    config.dict['compiler']['windows']['binaries'] = [f"{path}/{b}" for b in config.dict['compiler']['windows'].get('binaries', [])]
-
-                    # TODO: Linux and Mac
-
+                    if current_platform in config.dict['compiler']:
+                        platform_config = config.dict['compiler'][current_platform]
+                        platform_config['includes'] = [f"{path}/{i}" for i in platform_config.get('includes', [])]
+                        platform_config['libdirs'] = [f"{path}/{l}" for l in platform_config.get('libdirs', [])]
+                        platform_config['binaries'] = [f"{path}/{b}" for b in platform_config.get('binaries', [])]
+                
                 includes = config.dict.get('includes', [])
                 libs = config.dict.get('libs', [])
                 libdirs = config.dict.get('libdirs', [])
                 binaries = config.dict.get('binaries', [])
                 defines = config.dict.get('defines', [])
                 
-                current_platform = platform.system().lower()
-
                 if current_platform in config.dict:
                     platform_config = config.dict[current_platform]
                     includes += platform_config.get('includes', [])
@@ -146,13 +144,17 @@ class RequirementManager:
                     binaries += platform_config.get('binaries', [])
                     defines += platform_config.get('defines', [])
                 
-                self._includes += [f"{path}/{i}" for i in includes]
-                self._libs += libs
-                self._libdirs += [f"{path}/{l}" for l in libdirs]
-                self._binaries += [f"{path}/{b}" for b in binaries]
-                self._defines += defines
+                rm = config.get_requirement_manager(ignore_deps=ignore_deps, root_config=root_config)
 
-                self.requirements.append(Requirment(name, config, self.config))
+                self._includes += [f"{path}/{i}" for i in includes] + rm.includes
+                self._libs += libs + rm.libs
+                self._libdirs += [f"{path}/{l}" for l in libdirs] + rm.libdirs
+                self._binaries += [f"{path}/{b}" for b in binaries] + rm.binaries
+                self._defines += defines + rm.defines
+
+                root_config = self.config if not root_config else root_config
+                
+                self.requirements.append(Requirment(name, config, root_config))
 
     @property
     def includes(self: "RequirementManager") -> list:
