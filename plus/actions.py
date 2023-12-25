@@ -1,5 +1,9 @@
-from .project import Project
-from .deps_repo import DepRepository
+from plus.config import Config
+from plus.project import Project
+from plus.repository import Repository
+from plus.requirement_manager import RequirementManager
+from plus.rtext import *
+
 import os
 
 def init_project(args):
@@ -11,24 +15,48 @@ def init_project(args):
         type = 'static-lib'
     elif args.shared_lib:
         type = 'shared-lib'
+
+    if os.path.exists(args.init_name):
+        exit(f"Project {rtext(args.init_name, color=color.green, style=style.bold)} already exists")
     
-    project = Project(args.init_name, type=type)
-    project.create()
+    os.mkdir(args.init_name)
+    os.chdir(args.init_name)
+
+    config = Config.create(
+        name=args.init_name,
+        type=type,
+    )
+    
+    Project.create(config)
 
 def build_project(args):
-    project = Project(args.build_name)
-    project.validate()
-    project.build(release=args.release)
+    if not os.path.exists(args.build_name):
+        exit(f"Project {rtext(args.build_name, color=color.green, style=style.bold)} does not exist")
+    
+    os.chdir(args.build_name)
+
+    config = Config.from_file('plus.toml')
+    project = Project('.', config)
+    project.compile()
+    config.save()
 
 def run_project(args):
-    project = Project(args.run_name)
-    project.validate()
-    project.run(release=args.release)
+    if not os.path.exists(args.run_name):
+        exit(f"Project {rtext(args.run_name, color=color.green, style=style.bold)} does not exist")
+    
+    os.chdir(args.run_name)
+
+    config = Config.from_file('plus.toml')
+    project = Project('.', config)
+    project.run()
+    config.save()
 
 def install_project(args):
-    project = Project('.')
-    project.validate()
-    project.install_requirements()
+    config = Config.from_file('plus.toml')
+
+    for req in config.get_requirement_manager():
+        req.compile(force=args.force)
+        print(f"Installed {rtext(req.name, color=color.green, style=style.bold)} " + rtext("✓", color=color.green, style=style.bold))
 
 def new_project(args):
     project = Project('.')
@@ -43,10 +71,10 @@ def new_project(args):
         project.new_header(args.new_name, overwrite=args.overwrite)
     
 def upgrade_project(args):
-    dep = DepRepository()
+    dep = Repository()
     dep.upgrade()
 
 def add_project(args):
-    project = Project('.')
-    project.validate()
-    project.add_dep(args.add_name)
+    config = Config.from_file('plus.toml')
+
+    config.get_requirement_manager().add(args.add_name)

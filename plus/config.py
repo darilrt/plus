@@ -1,13 +1,111 @@
 import toml
-import os
+
+from plus.lockfile import LockFile
+from plus.requirement_manager import RequirementManager
 
 class Config:
-    def __init__(self, path: str, type="console-app"):
-        self.is_valid = True
-        self._path = path
-        self._config = {
+    def __init__(self: "Config", name: str="<name>", type="console-app"):
+        self.dict = self._get_default_dict(name, type)
+        self.lockfile = LockFile("plus.lock")
+
+    def save(self: "Config", path: str="plus.toml"):
+        try:
+            with open(path, "w") as f:
+                toml.dump(self.dict, f)
+        except Exception as e:
+            exit(f"Could not save config file at {path}\n{e}")
+
+    def get_requirement_manager(self: "Config", ignore_deps=[], root_config=None) -> RequirementManager:
+        return RequirementManager(self, ignore_deps=ignore_deps, root_config=root_config)
+
+    @property
+    def type(self: "Config") -> str:
+        if "type" not in self.dict["linker"]:
+            exit("plus.toml file does not have a linker type\n[linker]\ntype = \"console-app\"")
+        return self.dict["linker"]["type"]
+    
+    @type.setter
+    def type(self: "Config", value: str) -> None:
+        self.dict["linker"]["type"] = value
+
+    @property
+    def name(self: "Config") -> str:
+        if "name" not in self.dict["project"]:
+            exit("plus.toml file does not have a project name\n[project]\nname = \"<name>\"")
+        return self.dict["project"]["name"]
+    
+    @name.setter
+    def name(self: "Config", value: str) -> None:
+        if 'project' not in self.dict:
+            self.dict['project'] = { }
+        self.dict["project"]["name"] = value
+
+    @property
+    def cxx(self: "Config") -> str:
+        if 'compiler' not in self.dict:
+            self.dict['compiler'] = { }
+        if 'cxx' not in self.dict['compiler']:
+            self.dict['compiler']['cxx'] = 'g++'
+            print("plus.toml file does not have a compiler set, defaulting to g++")
+        return self.dict["compiler"]["cxx"]
+    
+    @cxx.setter
+    def cxx(self: "Config", value: str) -> None:
+        if 'compiler' not in self.dict:
+            self.dict['compiler'] = { }
+        self.dict["compiler"]["cxx"] = value
+
+    @property
+    def standard(self: "Config") -> str:
+        if 'compiler' not in self.dict:
+            self.dict['compiler'] = { }
+        if "standard" not in self.dict["compiler"]:
+            self.dict["compiler"]["standard"] = "c++17"
+            print("plus.toml file does not have a compiler standard set, defaulting to c++17")
+        return self.dict["compiler"]["standard"]
+    
+    @standard.setter
+    def standard(self: "Config", value: str) -> None:
+        if 'compiler' not in self.dict:
+            self.dict['compiler'] = { }
+        self.dict["compiler"]["standard"] = value
+    
+    @property
+    def debug(self: "Config") -> bool:
+        if 'compiler' not in self.dict:
+            self.dict['compiler'] = { }
+        if 'debug' not in self.dict['compiler']:
+            self.dict['compiler']['debug'] = True
+        return self.dict["compiler"]["debug"]
+
+    @staticmethod
+    def from_file(path: str) -> "Config":
+        config = Config()
+
+        try:
+            with open(path, "r") as f:
+                config.dict = toml.load(f)
+        except FileNotFoundError as e:
+            exit(f"Could not find config file at {path}")
+        except toml.TomlDecodeError as e:
+            exit(f"Could not parse config file at {path}\n{e}")
+        except Exception as e:
+            exit(f"Could not load config file at {path}\n{e}")
+
+        config.lockfile.load()
+
+        return config
+
+    @staticmethod
+    def create(name: str, type="console-app") -> "Config":
+        config = Config(name, type)
+        config.save()
+        return config
+
+    def _get_default_dict(self: "Config", name: str, type="console-app") -> dict:
+        return {
             "project": {
-                "name": "<name>",
+                "name": name,
                 "version": "0.1.0",
                 "description": "",
                 "author": "",
@@ -16,47 +114,19 @@ class Config:
                 "license": "",
             },
             "compiler": {
-                "type": type,
                 "cxx": "g++",
                 "standard": "c++17",
+                "flags": [ ],
                 "includes": [ "include" ],
-                "libdirs": [],
-                "libs": [],
+                "defines": [ ],
+                "warnings": [ ],
+                "debug": True,
             },
-            "requires": {},
+            "linker": {
+                "type": type,
+                "flags": [ ],
+                "libdirs": [ ],
+                "libs": [ ],
+            },
+            "require": [ ],
         }
-
-        if os.path.exists(self._path):
-            self.load()
-    
-    def load(self):
-        with open(self._path, 'r') as f:
-            try:
-                self._config = toml.load(f)
-                self.is_valid = True
-            except toml.decoder.TomlDecodeError as e:
-                print("Error loading", self._path)
-                print(e)
-                self.is_valid = False
-    
-    def save(self):
-        with open(self._path, 'w') as f:
-            f.write(toml.dumps(self._config))
-    
-    def get(self, key: str, default: any) -> any:
-        return self._config.get(key, default)
-    
-    def set(self, key: str, value: any):
-        self._config[key] = value
-    
-    def __getitem__(self, key: str) -> any:
-        return self.get(key, None)
-    
-    def __setitem__(self, key: str, value: any):
-        self.set(key, value)
-    
-    def __contains__(self, key: str) -> bool:
-        return key in self._config
-    
-    def __str__(self) -> str:
-        return str(self._config)

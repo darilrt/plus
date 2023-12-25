@@ -3,7 +3,7 @@ import subprocess
 import toml
 import os
 
-class DepRepository:
+class Repository:
     PLUS_REPO = 'http://github.com/darilrt/plus-deps.git'
     PLUS_HOME = os.path.join(os.path.expanduser("~"), '.plus')
 

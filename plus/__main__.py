@@ -42,6 +42,7 @@ def main():
 
     # install subparser
     install_parser = subparsers.add_parser('install', help='install all dependencies of the current project')
+    install_parser.add_argument('-f', '--force', action='store_true', help='force install dependencies')
     install_parser.set_defaults(func=install_project)
 
     # new subparser
