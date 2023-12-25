@@ -17,7 +17,7 @@ class CompilationResult:
         self.output = output
 
 class SourceCompiler:
-    def __init__(self, cxx='', cxxflags=[], libdirs=[], includes=[], libs=[], binaries=[], defines=[], warnings=[]):
+    def __init__(self, cxx='', cxxflags=[], libdirs=[], includes=[], libs=[], binaries=[], defines=[], warnings=[], debug=False):
         self.ar = 'ar'
         self.cxx = cxx
         self.cxxflags = cxxflags
@@ -27,8 +27,9 @@ class SourceCompiler:
         self.binaries = binaries.copy()
         self.defines = defines.copy()
         self.warnings = warnings
+        self.debug = debug
 
-    def compile(self, src: str, dest: str, release=False) -> CompilationResult:
+    def compile(self, src: str, dest: str) -> CompilationResult:
         if not os.path.exists(dest):
             os.mkdir(dest)
         
@@ -38,6 +39,9 @@ class SourceCompiler:
         defines = [f'-D{d}' for d in self.defines]
         warnings = [f'-W{l}' for l in self.warnings]
 
+        if self.debug:
+            defines += ['-D_DEBUG']
+
         cmd = [self.cxx, '-c', src, '-o', obj, *includes, *defines, *self.cxxflags, *warnings]
         result = subprocess.run(cmd)
 
@@ -46,7 +50,7 @@ class SourceCompiler:
         
         return CompilationResult(True, 0, '', '', obj)
     
-    def link(self, objs: List[str], dest: str, release=False, mwindows=False) -> CompilationResult:
+    def link(self, objs: List[str], dest: str, mwindows=False) -> CompilationResult:
         if dest != '' and not os.path.exists(os.path.dirname(dest)):
             os.makedirs(os.path.dirname(dest))
         
@@ -75,7 +79,7 @@ class SourceCompiler:
 
         return CompilationResult(True, 0, '', '', dest)
 
-    def link_lib(self, objs: List[str], dest: str, release=False, shared=False) -> CompilationResult:
+    def link_lib(self, objs: List[str], dest: str, shared=False) -> CompilationResult:
         if not os.path.exists(os.path.dirname(dest)):
             os.makedirs(os.path.dirname(dest))
         
@@ -182,5 +186,6 @@ class SourceCompiler:
             libs=libs,
             binaries=binaries,
             defines=defines,
-            warnings=config['compiler'].get('warnings', [])
+            warnings=config['compiler'].get('warnings', []),
+            debug=config['compiler'].get('debug', False)
         )

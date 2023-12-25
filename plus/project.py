@@ -111,9 +111,9 @@ class Project:
             src = src_file.replace("\\", "/")
             dest = os.path.dirname(src_file.replace("\\", "/").replace(f'{self.fullpath}/src', f'{self.fullpath}/obj'))
 
-            if src_file in files:
-                if os.path.getmtime(src) == files[src_file]['stamp']:
-                    objects.append(files[src_file]['object'])
+            if src in files:
+                if os.path.getmtime(src) == files[src]['stamp']:
+                    objects.append(files[src]['object'])
                     continue
             
             result: CompilationResult = compiler.compile(src=src, dest=dest)
@@ -125,7 +125,7 @@ class Project:
             print(f"Compiled {rtext(src, color=color.green, style=style.bold)} " + rtext("✓", color=color.green, style=style.bold))
             
             objects.append(result.output)
-            files[src_file] = {
+            files[src] = {
                 'stamp': os.path.getmtime(src),
                 'object': result.output.replace("\\", "/")
             }
