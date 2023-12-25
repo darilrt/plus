@@ -16,7 +16,7 @@ class LockFile:
                     data = toml.load(f)
                     self.is_valid = True
                 except:
-                    print('Invalid lock file')
+                    print('Invalid lockfile')
                     self.is_valid = False
                     return
         else:
@@ -41,8 +41,8 @@ class LockFile:
             'object': object
         }
     
-    def add_dep(self, dep: str, version: str):
-        self.deps[dep] = version
+    def add_dep(self, dep: str, stamp: str):
+        self.deps[dep] = stamp
 
     def get_dep(self, dep: str) -> str:
         return self.deps[dep]
