@@ -1,53 +1,82 @@
 
-from .config import Config
-from .lockfile import LockFile
 import os
 
 class Subprojects:
-    def __init__(self, config: Config, lockfile: LockFile, path: str):
-        self.subprojects = []
+    def __init__(self, config: "Config", path: str):
+        self.subprojects = {}
         self.config = config
-        self.lockfile = lockfile
         self.path = path
 
-        if 'subprojects' in config:
-            self.subprojects = config['subprojects']
+        if 'subprojects' in self.config.dict:
+            self.subprojects = config.dict['subprojects']
     
-    def build(self):
+    def compile(self):
         for name in self.subprojects:
-            if not name in self.lockfile.subproject:
-                self.lockfile.subproject[name] = { 'stamp': None }
+            if not name in self.config.lockfile.subproject:
+                self.config.lockfile.subproject[name] = { 'stamp': None }
 
-            subproject = self.config['subprojects'][name]
-            subproject_lock = self.lockfile.subproject[name]
+            subproject = self.config.dict['subprojects'][name]
+            subproject_lock = self.config.lockfile.subproject[name]
             path = os.path.join(self.path, name)
 
             if subproject_lock['stamp'] == None or subproject_lock['stamp'] < os.path.getmtime(path):
-                self.build_subproject(name, subproject)
+                self.compile_subproject(name, subproject)
                 subproject_lock['stamp'] = os.path.getmtime(path)
-                self.lockfile.save()
+                self.config.lockfile.save()
             else:
                 print(f'Compiled subproject {name}')
 
-    def build_subproject(self, name: str, project: dict):
+    def compile_subproject(self, name: str, project: dict):
         if not 'path' in project:
             project['path'] = name
         
         path = os.path.join(self.path, project['path'])
         
-        from .project import Project
+        from plus.project import Project
+        from plus.config import Config
 
-        subproject = Project(path)
-        subproject.validate()
-        subproject.build()
-        
-    def get_include_dirs(self):
+        old_dir = os.getcwd()
+        os.chdir(path)
+
+        config = Config.from_file(os.path.join(path, 'plus.toml'))
+        subproject = Project(path, config)
+        subproject.compile()
+
+        os.chdir(old_dir)
+
+    def get_compiler_config(self):
+        from plus.config import Config
+
         includes = []
+        libs = []
+        libdirs = []
+        binaries = []
+        defines = []
 
-        for subproject in self.subprojects:
-            includes.extend(subproject.get_include_dirs())
+        for name in self.subprojects:
+            subproject = self.subprojects[name]
+            path = os.path.join(self.path, subproject['path'])
+            config = Config.from_file(os.path.join(path, 'plus.toml'))
+            compiler = config.dict.get('compiler', { })
+
+            if 'linker' in config.dict and 'type' in config.dict['linker']:
+                if config.dict['linker']['type'] == 'static-lib':
+                    libs += [f'{name}']
+                    libdirs += [os.path.join(path, 'lib')]
+            
+            includes += [os.path.join(path, f) for f in compiler.get('includes', [])]
+            libs += compiler.get('libs', [])
+            libdirs += [os.path.join(path, f) for f in compiler.get('libdirs', [])]
+            binaries += [os.path.join(path, f) for f in compiler.get('binaries', [])]
+            defines += compiler.get('defines', [])
         
-        return includes
+        return {
+            'includes': includes,
+            'libs': libs,
+            'libdirs': libdirs,
+            'binaries': binaries,
+            'defines': defines
+        }
 
     def __iter__(self):
         return iter(self.subprojects)

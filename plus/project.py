@@ -18,24 +18,29 @@ class Project:
         if not os.path.exists(self.fullpath):
             os.makedirs(self.fullpath)
 
+        subprojects = self.config.get_subprojects(path=self.fullpath)
+        subprojects.compile()
+
         root_config = self.config if not root_config else root_config
 
         rm = self.config.get_requirement_manager(ignore_deps=[self.config.name], root_config=root_config)
         if len(rm.requirements) > 0:
             print(f"Building dependencies for {rtext(self.config.name, color=color.green, style=style.bold)}")
             rm.list()
-
+        
         for req in rm:
             req.compile()
 
         if not compiler:
             compiler = SourceCompiler.from_config(self.config.dict)
 
-        compiler.includes += list(dict.fromkeys(rm.includes))
-        compiler.libs += list(dict.fromkeys(rm.libs))
-        compiler.libdirs += list(dict.fromkeys(rm.libdirs))
-        compiler.binaries += list(dict.fromkeys(rm.binaries))
-        compiler.defines += list(dict.fromkeys(rm.defines))
+        sp = subprojects.get_compiler_config()
+
+        compiler.includes += list(dict.fromkeys(rm.includes + sp["includes"]))
+        compiler.libs += list(dict.fromkeys(rm.libs + sp["libs"]))
+        compiler.libdirs += list(dict.fromkeys(rm.libdirs + sp["libdirs"]))
+        compiler.binaries += list(dict.fromkeys(rm.binaries + sp["binaries"]))
+        compiler.defines += list(dict.fromkeys(rm.defines + sp["defines"]))
 
         self._compile_requirements()
         self._script('pre-build')

@@ -2,6 +2,7 @@ import toml
 
 from plus.lockfile import LockFile
 from plus.requirement_manager import RequirementManager
+from plus.subprojects import Subprojects
 
 class Config:
     def __init__(self: "Config", name: str="<name>", type="console-app"):
@@ -17,6 +18,9 @@ class Config:
 
     def get_requirement_manager(self: "Config", ignore_deps=[], root_config=None) -> RequirementManager:
         return RequirementManager(self, ignore_deps=ignore_deps, root_config=root_config)
+
+    def get_subprojects(self: "Config", path=".") -> "Subprojects":
+        return Subprojects(self, path)
 
     @property
     def type(self: "Config") -> str:
