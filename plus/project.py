@@ -137,7 +137,7 @@ class Project:
 
         result = None
 
-        if 'linker' in self.config.dict and 'type' in self.config.dict['linker']:
+        if len(objects) > 0 and 'linker' in self.config.dict and 'type' in self.config.dict['linker']:
             if self.config.dict['linker']['type'] == 'static-lib':
                 result = compiler.link_lib(objs=objects, dest=f'{self.fullpath}/lib/lib{self.config.name}')
                 compiler.copy_binaries(bindir=f'{self.fullpath}/lib')
@@ -151,9 +151,9 @@ class Project:
                 result = compiler.link(objs=objects, dest=f'{self.fullpath}/bin/{self.config.name}', mwindows=True)
                 compiler.copy_binaries(bindir=f'{self.fullpath}/bin')
 
-        if not result.success:
-            print(result.stderr)
-            exit(f"Could not link {self.config.name}")
+            if not result.success:
+                print(result.stderr)
+                exit(f"Could not link {self.config.name}")
 
         self.config.lockfile.save()
     

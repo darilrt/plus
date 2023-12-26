@@ -1,3 +1,4 @@
+from plus.rtext import *
 
 import os
 
@@ -12,19 +13,9 @@ class Subprojects:
     
     def compile(self):
         for name in self.subprojects:
-            if not name in self.config.lockfile.subproject:
-                self.config.lockfile.subproject[name] = { 'stamp': None }
-
             subproject = self.config.dict['subprojects'][name]
-            subproject_lock = self.config.lockfile.subproject[name]
-            path = os.path.join(self.path, name)
-
-            if subproject_lock['stamp'] == None or subproject_lock['stamp'] < os.path.getmtime(path):
-                self.compile_subproject(name, subproject)
-                subproject_lock['stamp'] = os.path.getmtime(path)
-                self.config.lockfile.save()
-            else:
-                print(f'Compiled subproject {name}')
+            self.compile_subproject(name, subproject)
+            print(f'Compiled subproject {rtext(name, color=color.green, style=style.bold)}')
 
     def compile_subproject(self, name: str, project: dict):
         if not 'path' in project:

@@ -72,7 +72,6 @@ class SourceCompiler:
         ]
 
         result = subprocess.run(cmd)
-        print(' '.join(cmd))
 
         if result.returncode != 0:
             return CompilationResult(False, result.returncode, result.stderr, result.stdout, dest)
