@@ -37,7 +37,7 @@ class Project:
         sp = subprojects.get_compiler_config()
 
         compiler.includes += list(dict.fromkeys(rm.includes + sp["includes"]))
-        compiler.libs += list(dict.fromkeys(rm.libs + sp["libs"]))
+        compiler.libs += list(reversed(dict.fromkeys(rm.libs + sp["libs"])))
         compiler.libdirs += list(dict.fromkeys(rm.libdirs + sp["libdirs"]))
         compiler.binaries += list(dict.fromkeys(rm.binaries + sp["binaries"]))
         compiler.defines += list(dict.fromkeys(rm.defines + sp["defines"]))
