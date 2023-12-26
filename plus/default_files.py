@@ -81,4 +81,7 @@ API void hello();
 
 # Vendor
 vendor/
+
+# Plus
+plus.lock
 """
