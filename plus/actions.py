@@ -37,7 +37,7 @@ def build_project(args):
 
     config = Config.from_file('plus.toml')
     project = Project('.', config)
-    project.compile()
+    project.compile(debug=True)
     config.save()
 
 def run_project(args):

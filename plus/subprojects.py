@@ -11,13 +11,15 @@ class Subprojects:
         if 'subprojects' in self.config.dict:
             self.subprojects = config.dict['subprojects']
     
-    def compile(self):
+    def compile(self, debug=False):
         for name in self.subprojects:
             subproject = self.config.dict['subprojects'][name]
-            self.compile_subproject(name, subproject)
-            print(f'Compiled subproject {rtext(name, color=color.green, style=style.bold)}')
+            self.compile_subproject(name, subproject, debug=False)
 
-    def compile_subproject(self, name: str, project: dict):
+            if debug:
+                print(f'Compiled subproject {rtext(name, color=color.green, style=style.bold)}')
+
+    def compile_subproject(self, name: str, project: dict, debug=False):
         if not 'path' in project:
             project['path'] = name
         
@@ -31,7 +33,7 @@ class Subprojects:
 
         config = Config.from_file(os.path.join(path, 'plus.toml'))
         subproject = Project(path, config)
-        subproject.compile()
+        subproject.compile(debug=debug)
 
         os.chdir(old_dir)
 
