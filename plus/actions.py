@@ -78,3 +78,14 @@ def add_project(args):
     config = Config.from_file('plus.toml')
 
     config.get_requirement_manager().add(args.add_name)
+
+def clean_project(args):
+    if not os.path.exists(args.clean_name):
+        exit(f"Project {rtext(args.clean_name, color=color.green, style=style.bold)} does not exist")
+
+    os.chdir(args.clean_name)
+
+    config = Config.from_file('plus.toml')
+    project = Project('.', config)
+
+    project.clean(files=args.files, deps=args.deps, subprojects=args.subprojects)

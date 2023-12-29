@@ -1,4 +1,5 @@
 import platform
+import shutil
 import subprocess
 import os
 import glob
@@ -74,6 +75,30 @@ class Project:
         with open(f'include/{name}', 'w') as f:
             f.write(default)
             
+    def clean(self, files=True, deps=True, subprojects=True) -> None:
+        lockfile = self.config.lockfile
+        
+        if files:
+            if os.path.exists('bin'):
+                shutil.rmtree('bin')
+            if os.path.exists('lib'):
+                shutil.rmtree('lib')
+            if os.path.exists('obj'):
+                shutil.rmtree('obj')
+            
+            lockfile.files = {}
+
+        if deps:
+            if os.path.exists('vendor'):
+                shutil.rmtree('vendor')
+            lockfile.deps = {}
+
+        if subprojects:
+            lockfile.subprojects = {}
+
+        lockfile.save()
+
+
     @staticmethod
     def create(config: Config) -> "Project":
         type = config.type
@@ -108,6 +133,7 @@ class Project:
 
         files = self.config.lockfile.get_files()
 
+        is_first = True
         for src_file in src_files:
             src = src_file.replace("\\", "/")
             dest = os.path.dirname(src_file.replace("\\", "/").replace(f'{self.fullpath}/src', f'{self.fullpath}/obj'))
@@ -123,6 +149,10 @@ class Project:
                 print(result.stderr)
                 exit(f"Could not compile {src}")
 
+            if not is_first:
+                print('\033[F\033[K', end='')
+            else:
+                is_first = False
             print(f"Compiled {rtext(src, color=color.green, style=style.bold)} " + rtext("✓", color=color.green, style=style.bold))
             
             objects.append(result.output)
@@ -152,7 +182,7 @@ class Project:
                 exit(f"Could not link {self.config.name}")
 
         self.config.lockfile.save()
-    
+
     def _script(self: "Project", name: str, config: dict=None) -> None:
         script = f'{name}'
         current_platform = platform.system().lower()

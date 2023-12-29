@@ -5,6 +5,7 @@ from .actions import install_project
 from .actions import new_project
 from .actions import upgrade_project
 from .actions import add_project
+from .actions import clean_project
 
 import argparse
 
@@ -61,6 +62,14 @@ def main():
     add_parser = subparsers.add_parser('add', help='add a dependency to the current project')
     add_parser.add_argument('add_name', help='dependency name')
     add_parser.set_defaults(func=add_project)
+
+    # clean subparser
+    clean_parser = subparsers.add_parser('clean', help='clean the current project')
+    clean_parser.add_argument('clean_name', help='project name', default='.', nargs='?')
+    clean_parser.add_argument('-f', '--files', action='store_true', help='clean files')
+    clean_parser.add_argument('-d', '--deps', action='store_true', help='clean dependencies')
+    clean_parser.add_argument('-s', '--subprojects', action='store_true', help='clean subprojects')
+    clean_parser.set_defaults(func=clean_project)
     
     args = parser.parse_args()
     
