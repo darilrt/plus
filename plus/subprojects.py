@@ -13,11 +13,15 @@ class Subprojects:
     
     def compile(self, debug=False):
         for name in self.subprojects:
+            if debug:
+                print(f'Compiling subproject {rtext(name, color=color.green, style=style.bold)}', end='')
+            
             subproject = self.config.dict['subprojects'][name]
             self.compile_subproject(name, subproject, debug=False)
 
             if debug:
-                print(f'Compiled subproject {rtext(name, color=color.green, style=style.bold)}')
+                print(rtext(' ✓', color=color.green, style=style.bold))
+
 
     def compile_subproject(self, name: str, project: dict, debug=False):
         if not 'path' in project:
