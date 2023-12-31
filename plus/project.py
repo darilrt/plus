@@ -94,7 +94,7 @@ class Project:
             lockfile.deps = {}
 
         if subprojects:
-            lockfile.subprojects = {}
+            self.config.get_subprojects(path=self.fullpath).clean(files=files, deps=deps)
 
         lockfile.save()
 

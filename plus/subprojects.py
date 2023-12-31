@@ -41,6 +41,21 @@ class Subprojects:
 
         os.chdir(old_dir)
 
+    def clean(self, files=True, deps=True):
+        old_dir = os.getcwd()
+
+        from plus.project import Project
+        from plus.config import Config
+
+        for subproject in self.subprojects:
+            os.chdir(os.path.join(self.path, self.subprojects[subproject]['path']))
+
+            config = Config.from_file('plus.toml')
+            project = Project('.', config)
+            project.clean(files=files, deps=deps, subprojects=False)
+
+            os.chdir(old_dir)
+
     def get_compiler_config(self):
         from plus.config import Config
 
