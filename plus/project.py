@@ -28,6 +28,7 @@ class Project:
         if debug and len(rm.requirements) > 0:
             print(f"Building dependencies for {rtext(self.config.name, color=color.green, style=style.bold)}")
             rm.list()
+            print()
         
         for req in rm:
             req.compile()
@@ -142,6 +143,9 @@ class Project:
                 if os.path.getmtime(src) == files[src]['stamp']:
                     objects.append(files[src]['object'])
                     continue
+
+            print('\033[F\033[K', end='')
+            print(f"Compiling {rtext(src, color=color.green, style=style.bold)} ...")
             
             result: CompilationResult = compiler.compile(src=src, dest=dest)
 
@@ -149,10 +153,7 @@ class Project:
                 print(result.stderr)
                 exit(f"Could not compile {src}")
 
-            if not is_first:
-                print('\033[F\033[K', end='')
-            else:
-                is_first = False
+            print('\033[F\033[K', end='')
             print(f"Compiled {rtext(src, color=color.green, style=style.bold)} " + rtext("✓", color=color.green, style=style.bold))
             
             objects.append(result.output)

@@ -14,13 +14,14 @@ class Subprojects:
     def compile(self, debug=False):
         for name in self.subprojects:
             if debug:
-                print(f'Compiling subproject {rtext(name, color=color.green, style=style.bold)}')
+                
+                print(f'Compiling subproject {rtext(name, color=color.green, style=style.bold)}...\n')
             
             subproject = self.config.dict['subprojects'][name]
             self.compile_subproject(name, subproject, debug=False)
 
             if debug:
-                print(f'\033[F\033[KCompiling subproject {rtext(name, color=color.green, style=style.bold)} ' + rtext('✓', color=color.green, style=style.bold))
+                print(f'\033[F\033[K\033[F\033[KCompiled subproject {rtext(name, color=color.green, style=style.bold)} ' + rtext('✓', color=color.green, style=style.bold))
 
 
     def compile_subproject(self, name: str, project: dict, debug=False):
