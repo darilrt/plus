@@ -48,7 +48,9 @@ class Subprojects:
                 continue
 
             else:
-                self.compile_subproject(subproject, subprojects[subproject], debug=debug)
+                dc = subprojects[subproject].copy()
+                dc['path'] = os.path.join(project['path'], dc['path'])
+                self.compile_subproject(subproject, dc, debug=debug)
                 self.compiled_subprojects.append(subproject)
 
         subproject = Project(path, config)
