@@ -8,6 +8,7 @@ from plus.config import Config
 from plus.default_files import Defualt
 from plus.rtext import *
 from plus.source_compiler import CompilationResult, SourceCompiler
+from plus.timer import Timer
 
 class Project:
     def __init__(self: "Project", path: str, config: Config, type="console-app") -> None:
@@ -15,12 +16,14 @@ class Project:
         self.fullpath = os.path.abspath(path).replace("\\", "/")
         self.config = config
     
-    def compile(self: "Project", debug=False, compiler: SourceCompiler=None, force=False, optional_compile=False, root_config=None) -> None:
+    def compile(self: "Project", debug=False, compiler: SourceCompiler=None, force=False, optional_compile=False, root_config=None, compile_subprojects=True) -> None:
         if not os.path.exists(self.fullpath):
             os.makedirs(self.fullpath)
 
         subprojects = self.config.get_subprojects(path=self.fullpath)
-        subprojects.compile(debug=debug)
+        
+        if compile_subprojects:
+            subprojects.compile(debug=debug)
 
         root_config = self.config if not root_config else root_config
 
