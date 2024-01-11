@@ -9,7 +9,7 @@ with open('LICENSE') as f:
 
 setup(
     name='plus',
-    version='0.7.5',
+    version='0.7.6',
     description='Plus is a library for managing c++ projects',
     long_description=readme,
     author='Daril Rodriguez',

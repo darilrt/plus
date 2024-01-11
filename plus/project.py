@@ -102,7 +102,6 @@ class Project:
 
         lockfile.save()
 
-
     @staticmethod
     def create(config: Config) -> "Project":
         type = config.type
@@ -155,7 +154,7 @@ class Project:
             if not result.success:
                 print(result.stderr)
                 exit(f"Could not compile {src}")
-
+            
             print('\033[F\033[K', end='')
             print(f"Compiled {rtext(src, color=color.green, style=style.bold)} " + rtext("✓", color=color.green, style=style.bold))
             

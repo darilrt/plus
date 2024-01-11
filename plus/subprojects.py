@@ -14,20 +14,19 @@ class Subprojects:
         self.compiled_subprojects = []
     
     def compile(self, debug=False):
+        print(f'Compiling subprojects ...')
+
         for name in self.subprojects:
             if name in self.compiled_subprojects:
                 continue
 
-            if debug:
-                print(f'Compiling subproject {rtext(name, color=color.green, style=style.bold)}...\n')
-            
             subproject = self.config.dict['subprojects'][name]
-            self.compile_subproject(name, subproject, debug=False)
+            self.compile_subproject(name, subproject, debug=True)
             self.compiled_subprojects.append(name)
-
-            if debug:
-                print(f'\033[F\033[K\033[F\033[KCompiled subproject {rtext(name, color=color.green, style=style.bold)} ' + rtext('✓', color=color.green, style=style.bold))
-
+        
+        for compiled in self.compiled_subprojects:
+            print(f'Compiled subproject {rtext(compiled, color=color.green, style=style.bold)}')
+        
     def compile_subproject(self, name: str, project: dict, debug=False):
         if not 'path' in project:
             project['path'] = name
@@ -50,12 +49,12 @@ class Subprojects:
             else:
                 dc = subprojects[subproject].copy()
                 dc['path'] = os.path.join(project['path'], dc['path'])
-                self.compile_subproject(subproject, dc, debug=debug)
+                
+                self.compile_subproject(subproject, dc, debug=True)
                 self.compiled_subprojects.append(subproject)
 
         subproject = Project(path, config)
-        subproject.compile(debug=debug, compile_subprojects=False)
-
+        subproject.compile(debug=False, compile_subprojects=False)
         os.chdir(old_dir)
 
     def clean(self, files=True, deps=True):
