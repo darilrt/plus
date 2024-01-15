@@ -59,16 +59,24 @@ def install_project(args):
         print(f"Installed {rtext(req.name, color=color.green, style=style.bold)} " + rtext("✓", color=color.green, style=style.bold))
 
 def new_project(args):
-    project = Project('.')
-    project.validate()
+    config = Config.from_file('plus.toml')
+    project = Project('.', config)
 
     if args.source:
-        project.new_source(args.new_name, overwrite=args.overwrite)
+        project.new_source(f"{args.new_name}.cpp", overwrite=args.overwrite, default="#pragma once\n")
     elif args.header:
-        project.new_header(args.new_name, overwrite=args.overwrite)
+        project.new_header(f"{args.new_name}.hpp", overwrite=args.overwrite)
     else:
-        project.new_source(args.new_name, overwrite=args.overwrite)
-        project.new_header(args.new_name, overwrite=args.overwrite)
+        project.new_header(
+            f"{args.new_name}.hpp", 
+            overwrite=args.overwrite,
+            default="#pragma once\n"
+        )
+        project.new_source(
+            f"{args.new_name}.cpp",
+            overwrite=args.overwrite,
+            default=f"#include \"{args.new_name}.hpp\"\n"
+        )
     
 def upgrade_project(args):
     dep = Repository()

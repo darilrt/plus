@@ -69,6 +69,11 @@ class Project:
         if os.path.exists(f'src/{name}') and not overwrite:
             exit(f"Source file {name} already exists")
         
+        basedir: str = os.path.dirname(f'src/{name}')
+
+        if not os.path.exists(basedir):
+            os.makedirs(basedir)
+
         with open(f'src/{name}', 'w') as f:
             f.write(default)
 
@@ -76,6 +81,11 @@ class Project:
         if os.path.exists(f'include/{name}') and not overwrite:
             exit(f"Header file {name} already exists")
         
+        basedir: str = os.path.dirname(f'include/{name}')
+
+        if not os.path.exists(basedir):
+            os.makedirs(basedir)
+
         with open(f'include/{name}', 'w') as f:
             f.write(default)
             
