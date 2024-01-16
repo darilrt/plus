@@ -63,9 +63,9 @@ def new_project(args):
     project = Project('.', config)
 
     if args.source:
-        project.new_source(f"{args.new_name}.cpp", overwrite=args.overwrite, default="#pragma once\n")
+        project.new_source(f"{args.new_name}.cpp", overwrite=args.overwrite)
     elif args.header:
-        project.new_header(f"{args.new_name}.hpp", overwrite=args.overwrite)
+        project.new_header(f"{args.new_name}.hpp", overwrite=args.overwrite, default="#pragma once\n")
     else:
         project.new_header(
             f"{args.new_name}.hpp", 
