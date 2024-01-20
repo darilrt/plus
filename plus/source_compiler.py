@@ -1,5 +1,4 @@
 from plus.repository import Repository
-from plus.dependence import Dependence
 from plus.config import Config
 from typing import List
 
