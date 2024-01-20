@@ -16,7 +16,7 @@ def main():
         epilog='')
 
     # help argument
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.5.0')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.7.9')
 
     # subparsers
     subparsers = parser.add_subparsers()
