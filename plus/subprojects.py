@@ -86,17 +86,30 @@ class Subprojects:
             path = os.path.join(self.path, subproject['path'])
             config = Config.from_file(os.path.join(path, 'plus.toml'))
             compiler = config.dict.get('compiler', { })
+            linker = config.dict.get('linker', { })
 
             if 'linker' in config.dict and 'type' in config.dict['linker']:
                 if config.dict['linker']['type'] == 'static-lib':
                     libs += [f'{name}']
                     libdirs += [os.path.join(path, 'lib')]
+                    
+                    subprojects = config.get_subprojects(path=path)
+
+                    for subproject in subprojects:
+                        config = Config.from_file(os.path.join(path, subprojects[subproject]["path"] + '/plus.toml'))
+
+                        if 'linker' in config.dict and 'type' in config.dict['linker']:
+                            if config.dict['linker']['type'] == 'static-lib':
+                                libs += [f'{subproject}']
+                                libdirs += [os.path.join(path, subprojects[subproject]["path"] + '/lib')]
             
             includes += [os.path.join(path, f) for f in compiler.get('includes', [])]
-            libs += compiler.get('libs', [])
-            libdirs += [os.path.join(path, f) for f in compiler.get('libdirs', [])]
+            libs += linker.get('libs', [])
+            libdirs += [os.path.join(path, f) for f in linker.get('libdirs', [])]
             binaries += [os.path.join(path, f) for f in compiler.get('binaries', [])]
             defines += compiler.get('defines', [])
+
+        libs.reverse()
         
         return {
             'includes': includes,

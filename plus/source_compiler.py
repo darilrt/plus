@@ -70,6 +70,12 @@ class SourceCompiler:
             *warnings
         ]
 
+        print(cmd[0])
+        for c in range(1, len(cmd) - 1):
+            print("\t" + cmd[c])
+                  
+        print(' '.join(cmd))
+
         result = subprocess.run(cmd)
 
         if result.returncode != 0:
