@@ -143,11 +143,11 @@ class SourceCompiler:
             print("No standard set, defaulting to c++17")
             config['compiler']['standard'] = 'c++17'
         
-        includes = config['compiler'].get('includes', [])
-        binaries = config['compiler'].get('binaries', [])
-        defines = config['compiler'].get('defines', [])
-        libdirs = config['linker'].get('libdirs', [])
-        libs = config['linker'].get('libs', [])
+        includes = config['compiler'].get('includes', []).copy()
+        binaries = config['compiler'].get('binaries', []).copy()
+        defines = config['compiler'].get('defines', []).copy()
+        libdirs = config['linker'].get('libdirs', []).copy()
+        libs = config['linker'].get('libs', []).copy()
 
         current_platform = platform.system().lower()
 
