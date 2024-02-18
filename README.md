@@ -22,7 +22,7 @@ plus is a simple command line tool to manage c++ projects.
 
 - python3
 - git
-- g++
+- gcc
 
 ## Installation
 
