@@ -8,7 +8,7 @@ with open('LICENSE') as f:
     license = f.read()
 
 setup(
-    name='plus',
+    name='plus-cpp',
     version='0.8.0',
     description='Plus is a library for managing c++ projects',
     long_description=readme,

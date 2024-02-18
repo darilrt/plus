@@ -26,6 +26,12 @@ plus is a simple command line tool to manage c++ projects.
 
 ## Installation
 
+### Pip
+
+`pip install plus-cpp`
+
+### From source
+
 ```bash
 $ git clone
 $ cd plus
@@ -55,6 +61,7 @@ $ plus init parent_project
 ```
 
 Then create a new project to be the child project.
+
 ```bash
 $ cd parent_project
 $ plus init child_project --lib
