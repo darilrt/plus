@@ -1,6 +1,6 @@
-# +plus
+# + Plus
 
-plus is a simple command line tool to manage c++ projects.
+Plus is a simple command line tool to manage c++ projects.
 
 ## Features
 
@@ -28,7 +28,11 @@ plus is a simple command line tool to manage c++ projects.
 
 ### Pip
 
-`pip install plus-cpp`
+Installation using pip (a Python package manager):
+
+```bash
+$ pip install plus-cpp
+```
 
 ### From source
 
