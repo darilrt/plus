@@ -166,6 +166,8 @@ class Compiler:
                 if link not in links:
                     links.append(link)
 
+            rich.print(links)
+
             rich.print(f"Linking")
 
             with console.status("[bold green]Linking[/bold green]", spinner="simpleDots") as status:
