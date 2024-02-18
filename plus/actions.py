@@ -1,99 +1,95 @@
-from plus.config import Config
+from plus.compiler import Compiler
 from plus.project import Project
 from plus.repository import Repository
-from plus.requirement_manager import RequirementManager
-from plus.rtext import *
 
+from rich import print
+import rich
 import os
+import re
 
 def init_project(args):
-    type = 'console-app'
+    is_lib: bool = args.lib
+    is_shared_lib: bool = args.shared_lib
 
-    if args.app:
-        type = 'app'
-    elif args.lib:
+    type: str = 'console-app'
+    if is_lib:
         type = 'static-lib'
-    elif args.shared_lib:
+    elif is_shared_lib:
         type = 'shared-lib'
-
-    if os.path.exists(args.init_name):
-        exit(f"Project {rtext(args.init_name, color=color.green, style=style.bold)} already exists")
     
-    os.mkdir(args.init_name)
-    os.chdir(args.init_name)
+    exp: str = r'^[a-zA-Z0-9_]+$'
 
-    config = Config.create(
-        name=args.init_name,
-        type=type,
-    )
-    
-    Project.create(config)
+    if not re.match(exp, args.name):
+        print(f"Invalid project name [bold red]{args.name} [/bold red]")
+        return
+
+    project = Project.create(args.name, type)
 
 def build_project(args):
-    if not os.path.exists(args.build_name):
-        exit(f"Project {rtext(args.build_name, color=color.green, style=style.bold)} does not exist")
-    
-    os.chdir(args.build_name)
-
-    config = Config.from_file('plus.toml')
-    project = Project('.', config)
-    project.compile(debug=True)
-    config.save()
+    print(f"Building project [bold blue]{args.path}[/bold blue]")
+    project = Project.open(args.path)
+    compiler = Compiler.from_project(project)
+    compiler.compile()
 
 def run_project(args):
-    if not os.path.exists(args.run_name):
-        exit(f"Project {rtext(args.run_name, color=color.green, style=style.bold)} does not exist")
-    
-    os.chdir(args.run_name)
+    print(f"Building project [bold blue]{args.path}[/bold blue]")
+    project = Project.open(args.path)
+    compiler = Compiler.from_project(project)
+    exec: str = compiler.compile()
 
-    config = Config.from_file('plus.toml')
-    project = Project('.', config)
-    project.run()
-    config.save()
+    if exec:
+        print(f"Running [bold green]{exec}[/bold green]")
+        os.system(exec)
 
 def install_project(args):
-    config = Config.from_file('plus.toml')
+    print(f"Installing dependencies")
+    project = Project.open('.')
 
-    for req in config.get_requirement_manager():
-        req.compile(force=args.force)
-        print(f"Installed {rtext(req.name, color=color.green, style=style.bold)} " + rtext("✓", color=color.green, style=style.bold))
+    if 'requires' not in project.config:
+        print(f"No dependencies found")
+        return
+    
+    project.install_deps()
+    
+    for sub in project.get_subprojects():
+        sub.install_deps()
 
 def new_project(args):
-    config = Config.from_file('plus.toml')
-    project = Project('.', config)
+    print(f"Creating new file [bold blue]{args.new_name}[/bold blue]")
 
-    if args.source:
-        project.new_source(f"{args.new_name}.cpp", overwrite=args.overwrite)
-    elif args.header:
-        project.new_header(f"{args.new_name}.hpp", overwrite=args.overwrite, default="#pragma once\n")
-    else:
-        project.new_header(
-            f"{args.new_name}.hpp", 
-            overwrite=args.overwrite,
-            default="#pragma once\n"
-        )
-        project.new_source(
-            f"{args.new_name}.cpp",
-            overwrite=args.overwrite,
-            default=f"#include \"{args.new_name}.hpp\"\n"
-        )
-    
 def upgrade_project(args):
-    dep = Repository()
-    dep.upgrade()
+    Repository.upgrade()
 
 def add_project(args):
-    config = Config.from_file('plus.toml')
+    project = Project.open('.')
 
-    config.get_requirement_manager().add(args.add_name)
+    if 'requires' not in project.config:
+        project.config['requires'] = []
+
+    if args.name in project.config['requires']:
+        print(f"Dependency [bold green]{args.name}[/bold green] already exists")
+        return
+
+    if 'deps' not in project.config and args.name in project.config['deps']:
+        project.config['requires'].append(args.name)
+    else:
+        Repository.load()
+
+        if Repository.has(args.name):
+            project.config['requires'].append(args.name)
+
+        else:
+            print(f"Dependency [bold red]{args.name}[/bold red] not found")
+            return
+
+    rich.print(f"Added dependency [bold green]{args.name}[/bold green]")
+    
+    project.save_config()
 
 def clean_project(args):
-    if not os.path.exists(args.clean_name):
-        exit(f"Project {rtext(args.clean_name, color=color.green, style=style.bold)} does not exist")
-
-    os.chdir(args.clean_name)
-
-    config = Config.from_file('plus.toml')
-    project = Project('.', config)
-
-    project.clean(files=args.files, deps=args.deps, subprojects=args.subprojects)
+    project = Project.open('.')
+    project.clean(
+        deps=args.deps,
+        files=args.files,
+        subprojects=args.subprojects
+    )

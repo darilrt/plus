@@ -1,0 +1,108 @@
+Metadata-Version: 2.1
+Name: plus
+Version: 0.7.21
+Summary: Plus is a library for managing c++ projects
+Home-page: https://github.com/darilrt/plus
+Author: Daril Rodriguez
+Author-email: darilrodriguez.2@gmail.com
+License: MIT License
+        
+        Copyright (c) 2023 DarilRT
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+License-File: LICENSE
+
+# +plus
+
+plus is a simple command line tool to manage c++ projects.
+
+## Features
+
+- [x] Create a new project
+- [x] Run the project
+- [x] Build the project
+- [x] Build static library
+- [x] Build shared library
+- [x] Build application without console
+- [x] Build console application
+- [x] Manage multiple subprojects
+- [x] Manage dependencies
+- [x] Custom dependencies
+- [x] Add a new source file
+- [x] Add a new header file
+- [x] Custom build commands for dependencies
+
+## Requirements
+
+- python3
+- git
+- g++
+
+## Installation
+
+```bash
+$ git clone
+$ cd plus
+$ python3 setup.py install
+```
+
+## Usage
+
+```bash
+$ plus --help
+```
+
+## Hello World
+
+```bash
+$ plus init hello_world
+$ cd hello_world
+$ plus run
+```
+
+## Subprojects
+
+First create a new project to be the parent project.
+
+```bash
+$ plus init parent_project
+```
+
+Then create a new project to be the child project.
+```bash
+$ cd parent_project
+$ plus init child_project --lib
+```
+
+Now you can add the child project to the parent project.
+In the parent project directory, open the `project.toml` file and add the child project to the `subprojects` list.
+
+```toml
+...
+[subprojects]
+child_project = { path = "child_project" }
+...
+```
+
+Now you can build the parent project and the child project will be built too.
+
+```bash
+$ plus build
+```

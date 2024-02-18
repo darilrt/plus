@@ -85,3 +85,33 @@ vendor/
 # Plus
 plus.lock
 """
+
+    def CONFIG(name: str, type: str) -> dict:
+        return {
+            "name": name,
+            "version": "0.1.0",
+            "description": "",
+            "author": "",
+            "email": "",
+            "url": "",
+            "license": "",
+            "requires": [],
+            "compiler": {
+                "cxx": "g++",
+                "c": "gcc",
+                "standard": "c++20",
+                "flags": [],
+                "includes": [ "include" ],
+                "defines": [],
+                "warnings": [],
+                "debug": True
+            },
+            "linker": {
+                "type": type,
+                "flags": [],
+                "libdirs": [],
+                "libs": []
+            },
+            "subprojects": []
+        }
+    
