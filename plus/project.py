@@ -1,71 +1,148 @@
-import platform
-import shutil
-import subprocess
-import os
-import glob
-
-from plus.config import Config
+from plus.repository import Repository
+from plus.dependency import Dependency
 from plus.default_files import Defualt
-from plus.rtext import *
-from plus.source_compiler import CompilationResult, SourceCompiler
-from plus.timer import Timer
+from plus.compiler import Compiler, CompilerDeps
+
+from rich.console import Console
+import shutil
+import rich
+import toml
+import os
 
 class Project:
-    def __init__(self: "Project", path: str, config: Config, type="console-app") -> None:
-        self.path = path
-        self.fullpath = os.path.abspath(path).replace("\\", "/")
-        self.config = config
+    def __init__(self, name: str, path: str) -> None:
+        self.name: str = name
+        self.path: str = os.path.abspath(path)
+        self.config_path: str = os.path.join(self.path, "plus.toml")
+        self.config: dict = {}
+        self.lock: dict = {}
     
-    def compile(self: "Project", debug=False, compiler: SourceCompiler=None, force=False, optional_compile=False, root_config=None, compile_subprojects=True) -> None:
-        if not os.path.exists(self.fullpath):
-            os.makedirs(self.fullpath)
+    def info(self, tabs: int = 0) -> None:
+        console = Console()
+        console.tab_size = 4 + tabs * 4
 
-        subprojects = self.config.get_subprojects(path=self.fullpath)
+        console.print(f"\tProject: [bold yellow]{self.name}[/bold yellow]")
+        console.print(f"\tPath: [bold green]{self.path}[/bold green]")
+        console.print(f"\tRequires: [bold blue]{', '.join(self.config['requires']) if 'requires' in self.config else '[]'}[/bold blue]")
+
+    def install_deps(self) -> None:
+        if 'requires' not in self.config:
+            return
+
+        if 'vendor' not in os.listdir(self.path):
+            os.makedirs(os.path.join(self.path, 'vendor'))
         
-        if compile_subprojects:
-            subprojects.compile(debug=debug)
+        for requiement in self.config['requires']:
+            dep: dict = None
 
-        root_config = self.config if not root_config else root_config
+            if 'deps' in self.config:
+                if requiement in self.config['deps']:
+                    dep = self.config['deps'][requiement]
 
-        rm = self.config.get_requirement_manager(ignore_deps=[self.config.name], root_config=root_config)
-        if debug and len(rm.requirements) > 0:
-            print(f"Building dependencies for {rtext(self.config.name, color=color.green, style=style.bold)}")
-            rm.list()
-            print()
+            Repository.load()
+            
+            if dep is None and Repository.has(requiement):
+                dep = Repository.get(requiement)
+
+                if dep is None:
+                    rich.print(f"Dependency [bold yellow]{requiement}[/bold yellow] not found in [bold green]{os.path.join(self.path, 'plus.toml')}[/bold green]")
+                    exit(1)
+            
+            if dep is None:
+                rich.print(f"Dependency [bold yellow]{requiement}[/bold yellow] not found")
+                exit(1)
+
+            dep: Dependency = Dependency.from_dict(dep, requiement)
+            dep.install(os.path.join(self.path, 'vendor'))
+
+    def get_subprojects(self) -> list["Project"]:
+        if 'subprojects' not in self.config:
+            return []
         
-        for req in rm:
-            req.compile()
+        subs: list["Project"] = []
 
-        if not compiler:
-            compiler = SourceCompiler.from_config(self.config.dict)
+        for sub in self.config['subprojects']:
+            path: str = os.path.join(self.path, self.config['subprojects'][sub]['path'])
 
-        sp = subprojects.get_compiler_config()
+            if not os.path.exists(path):
+                rich.print(f"Subproject [bold yellow]{sub}[/bold yellow] not found in [bold green]{os.path.join(self.path, 'plus.toml')}[/bold green]" )
+                exit(1)
 
-        compiler.includes += list(dict.fromkeys(rm.includes + sp["includes"]))
-        compiler.libs += list(reversed(dict.fromkeys(rm.libs + sp["libs"])))
-        compiler.libdirs += list(dict.fromkeys(rm.libdirs + sp["libdirs"]))
-        compiler.binaries += list(dict.fromkeys(rm.binaries + sp["binaries"]))
-        compiler.defines += list(dict.fromkeys(rm.defines + sp["defines"]))
-
-        self._script('pre-build')
-
-        if not optional_compile:
-            self._compile(compiler)
-        elif 'linker' in self.config.dict and 'type' in self.config.dict['linker']:
-            self._compile(compiler)
-            print(f"Compiled {rtext(self.config.name, color=color.green, style=style.bold)} " + rtext("✓", color=color.green, style=style.bold))
+            subs.append(Project.open(path))
         
-        self._script('post-build')
+        return subs
 
-    def run(self: "Project") -> None:
-        binary = f'bin/{self.config.name}'
+    def get_compiler_deps(self) -> CompilerDeps:
+        deps = CompilerDeps()
 
-        self.compile(debug=True)
+        if 'requires' in self.config:
+            requires = self.config['requires']
 
-        print(f"Running {rtext(self.config.name, color=color.green, style=style.bold)}")
-        subprocess.run([binary])
+            for requiement in requires:
+                dep: dict = None
 
-    def new_source(self: "Project", name: str, overwrite=False, default="") -> None:
+                if 'deps' in self.config:
+                    if requiement in self.config['deps']:
+                        dep = self.config['deps'][requiement]
+
+                Repository.load()
+                
+                if dep is None and Repository.has(requiement):
+                    dep = Repository.get(requiement)
+
+                    if dep is None:
+                        rich.print(f"Dependency [bold yellow]{requiement}[/bold yellow] not found in [bold green]{os.path.join(self.path, 'plus.toml')}[/bold green]")
+                        exit(1)
+                
+                if dep is None:
+                    rich.print(f"Dependency [bold yellow]{requiement}[/bold yellow] not found")
+                    exit(1)
+
+                dep: Dependency = Dependency.from_dict(dep, requiement)
+                deps.merge(dep.get_compiler_deps(os.path.join(self.path, 'vendor')))
+
+        if 'compiler' in self.config:
+            cmop = self.config['compiler']
+
+            if 'includes' in cmop:
+                deps.include_dirs.extend([
+                    os.path.join(self.path, inc) for inc in cmop['includes']
+                ])
+
+            if 'defines' in cmop:
+                deps.defines.extend(cmop['defines'])
+            
+            if 'flags' in cmop:
+                deps.flags.extend(cmop['flags'])
+
+            if 'binaries' in cmop:
+                deps.binaries.extend(cmop['binaries'])
+            
+        if 'linker' in self.config:
+            cmop = self.config['linker']
+
+            if 'libdirs' in cmop:
+                deps.lib_dirs.extend(cmop['libdirs'])
+
+            if 'libs' in cmop:
+                deps.libs.extend(cmop['libs'])
+
+            if 'flags' in cmop:
+                deps.flags.extend(cmop['flags'])
+
+
+        old_path: str = os.getcwd()
+        os.chdir(self.path)
+        for root, dirs, files in os.walk('src'):
+            for file in files:
+                if file.endswith('.cpp') or file.endswith('.c'):
+                    deps.sources.append(os.path.join(self.path, root, file))
+
+        os.chdir(old_path)
+
+        return deps
+
+    def new_source(self, name: str, overwrite: bool = False, default: str = "") -> None:
         if os.path.exists(f'src/{name}') and not overwrite:
             exit(f"Source file {name} already exists")
         
@@ -77,7 +154,7 @@ class Project:
         with open(f'src/{name}', 'w') as f:
             f.write(default)
 
-    def new_header(self: "Project", name: str, overwrite=False, default="") -> None:
+    def new_header(self, name: str, overwrite: bool = False, default: str = "") -> None:
         if os.path.exists(f'include/{name}') and not overwrite:
             exit(f"Header file {name} already exists")
         
@@ -88,9 +165,20 @@ class Project:
 
         with open(f'include/{name}', 'w') as f:
             f.write(default)
-            
+        
+    def save_config(self) -> None:
+        path: str = os.path.join(self.path, 'plus.toml')
+        with open(path, 'w') as f:
+            f.write(toml.dumps(self.config))
+    
+    def save_lock(self) -> None:
+        path: str = os.path.join(self.path, 'plus.lock')
+        with open(path, 'w') as f:
+            f.write(toml.dumps(self.lock))
+
     def clean(self, files=True, deps=True, subprojects=True) -> None:
-        lockfile = self.config.lockfile
+        old_path: str = os.getcwd()
+        os.chdir(self.path)
         
         if files:
             if os.path.exists('bin'):
@@ -100,25 +188,68 @@ class Project:
             if os.path.exists('obj'):
                 shutil.rmtree('obj')
             
-            lockfile.files = {}
+            self.lock = {}
 
         if deps:
             if os.path.exists('vendor'):
                 shutil.rmtree('vendor')
-            lockfile.deps = {}
+
+        os.chdir(old_path)
 
         if subprojects:
-            self.config.get_subprojects(path=self.fullpath).clean(files=files, deps=deps)
+            for sub in self.get_subprojects():
+                sub.clean(files, deps, subprojects)
 
-        lockfile.save()
+        self.save_lock()
 
     @staticmethod
-    def create(config: Config) -> "Project":
-        type = config.type
-        project = Project('.', config)
+    def open(name: str) -> "Project":
+        old_path: str = os.getcwd()
+        os.chdir(name)
 
-        os.mkdir('include')
-        os.mkdir('src')
+        if not os.path.exists('plus.toml'):
+            rich.print(f"Project not found in {os.getcwd()}")
+            exit(1)
+
+        if not os.path.exists('plus.lock'):
+            with open('plus.lock', 'w') as f:
+                f.write(toml.dumps({}))
+        
+        lock: dict = {}
+        with open('plus.lock', 'r') as f:
+            lock = toml.load(f)
+        
+        config: dict = {}
+
+        with open('plus.toml', 'r') as f:
+            config = toml.load(f)
+
+        if 'name' not in config:
+            rich.print(f"Invalid project file")
+            rich.print(f'Missing [bold red]name[/bold red] in [bold yellow]' + os.path.join(os.getcwd(), 'plus.toml') + '[/bold yellow] file')
+            exit(1)
+
+        project = Project(config['name'], os.getcwd())
+        project.config = config
+        project.lock = lock
+
+        os.chdir(old_path)
+        return project
+
+    @staticmethod
+    def create(name: str, type: str) -> "Project":
+        project = Project(name, os.path.join(os.getcwd(), name))
+
+        if not os.path.exists(name):
+            os.mkdir(name)
+        
+        os.chdir(name)
+
+        if not os.path.exists('include'):
+            os.mkdir('include')
+        
+        if not os.path.exists('src'):
+            os.mkdir('src')
 
         if type == 'console-app':
             project.new_source('main.cpp', default=Defualt.MAIN)
@@ -133,92 +264,10 @@ class Project:
 
         with open('.gitignore', 'w') as f:
             f.write(Defualt.GITIGNORE)
+        
+        with open('plus.toml', 'w') as f:
+            f.write(toml.dumps(Defualt.CONFIG(name, type)))
+
+        rich.print(f"Created project [bold yellow]{name}[/bold yellow]")
 
         return project
-
-    def _compile(self: "Project", compiler: SourceCompiler) -> None:
-        src_files = glob.glob(f'{self.fullpath}/src/**/*.cpp', recursive=True)
-    	
-        objects = []
-
-        if not os.path.exists(f'{self.fullpath}/obj'):
-            os.mkdir(f'{self.fullpath}/obj')
-
-        files = self.config.lockfile.get_files()
-
-        is_first = True
-        for src_file in src_files:
-            src = src_file.replace("\\", "/")
-            dest = os.path.dirname(src_file.replace("\\", "/").replace(f'{self.fullpath}/src', f'{self.fullpath}/obj'))
-
-            if src in files:
-                if os.path.getmtime(src) == files[src]['stamp']:
-                    objects.append(files[src]['object'])
-                    continue
-
-            print('\033[F\033[K', end='')
-            print(f"Compiling {rtext(src, color=color.green, style=style.bold)} ...")
-            
-            result: CompilationResult = compiler.compile(src=src, dest=dest)
-
-            if not result.success:
-                print(result.stderr)
-                exit(f"Could not compile {src}")
-            
-            print('\033[F\033[K', end='')
-            print(f"Compiled {rtext(src, color=color.green, style=style.bold)} " + rtext("✓", color=color.green, style=style.bold))
-            
-            objects.append(result.output)
-            files[src] = {
-                'stamp': os.path.getmtime(src),
-                'object': result.output.replace("\\", "/")
-            }
-
-        result = None
-
-        if len(objects) > 0 and 'linker' in self.config.dict and 'type' in self.config.dict['linker']:
-            if self.config.dict['linker']['type'] == 'static-lib':
-                result = compiler.link_lib(objs=objects, dest=f'{self.fullpath}/lib/lib{self.config.name}')
-                compiler.copy_binaries(bindir=f'{self.fullpath}/lib')
-            elif self.config.dict['linker']['type'] == 'shared-lib':
-                result = compiler.link_lib(objs=objects, dest=f'{self.fullpath}/lib/lib{self.config.name}', shared=True)
-                compiler.copy_binaries(bindir=f'{self.fullpath}/lib')
-            elif self.config.dict['linker']['type'] == 'console-app':
-                result = compiler.link(objs=objects, dest=f'{self.fullpath}/bin/{self.config.name}')
-                compiler.copy_binaries(bindir=f'{self.fullpath}/bin')
-            elif self.config.dict['linker']['type'] == 'app':
-                result = compiler.link(objs=objects, dest=f'{self.fullpath}/bin/{self.config.name}', mwindows=True)
-                compiler.copy_binaries(bindir=f'{self.fullpath}/bin')
-
-            if not result.success:
-                print(result.stderr)
-                exit(f"Could not link {self.config.name}")
-
-        self.config.lockfile.save()
-
-    def _script(self: "Project", name: str, config: dict=None) -> None:
-        script = f'{name}'
-        current_platform = platform.system().lower()
-        cmds = []
-
-        if not config:
-            config = self.config.dict
-        
-        if script in config:
-            cmds = config[script]
-        
-        if current_platform in config and script in config[current_platform]:
-            cmds = config[current_platform][script]
-
-        old_dir = os.getcwd()
-        os.chdir(self.fullpath)
-
-        for cmd in cmds:
-            try:
-                result = subprocess.run(cmd, shell=True, check=True)
-                if result.returncode != 0:
-                    exit(f"Build script failed with exit code {result.returncode}")
-            except subprocess.CalledProcessError as e:
-                exit(e)
-        
-        os.chdir(old_dir)
