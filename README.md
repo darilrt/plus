@@ -1,4 +1,6 @@
-# + Plus
+[![PyPi Package Version](https://img.shields.io/pypi/v/plus-cpp)](https://pypi.org/project/plus-cpp/)
+
+# <p align="center"><img src="https://raw.githubusercontent.com/darilrt/plus/assets/logo.png" width="200"/> Plus</p>
 
 Plus is a simple command line tool to manage c++ projects.
 
