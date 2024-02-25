@@ -70,7 +70,7 @@ def add_project(args):
         print(f"Dependency [bold green]{args.name}[/bold green] already exists")
         return
 
-    if 'deps' not in project.config and args.name in project.config['deps']:
+    if 'deps' in project.config and args.name in project.config['deps']:
         project.config['requires'].append(args.name)
     else:
         Repository.load()
