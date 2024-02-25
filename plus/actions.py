@@ -17,7 +17,7 @@ def init_project(args):
     elif is_shared_lib:
         type = 'shared-lib'
     
-    exp: str = r'^[a-zA-Z0-9_]+$'
+    exp: str = r'^[a-zA-Z0-9_\-]+$'
 
     if not re.match(exp, args.name):
         print(f"Invalid project name [bold red]{args.name} [/bold red]")
