@@ -44,7 +44,9 @@ class Compiler:
         rich.print(f"C++ Compiler: [bold green]{self.cxx}[/bold green]")
         rich.print(f"C Compiler: [bold green]{self.c}[/bold green]")
         rich.print(f"Subprojects: [bold green]{self.subprojects}[/bold green]")
-        rich.print(f"Sources: \n[bold green]{'\n'.join(self.deps.sources)}[/bold green]")
+
+        bs = '\n'
+        rich.print(f"Sources: \n[bold green]{bs.join(self.deps.sources)}[/bold green]")
 
         cmd: str = self._generate_cxx_cmd(self.deps.sources[0], self.deps.sources[0] + ".o")
         rich.print(f"Command: [bold green]{cmd}[/bold green]") 
