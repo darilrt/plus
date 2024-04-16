@@ -1,6 +1,7 @@
 import subprocess
 import platform
 import rich
+import time
 import os
 
 class CompilerDeps:
@@ -113,7 +114,8 @@ class Compiler:
                 source,
                 cmd,
                 os.path.getmtime(source),
-                self.project
+                self.project,
+                time.time()
             ))
 
         bin_path: str = os.path.join(self.project.path, "bin")
@@ -135,6 +137,19 @@ class Compiler:
                     for i in range(len(process)):
                         item: tuple[subprocess.Popen, str, str, float, "Project"] = process[i]
                         ret: int = item[0].poll()
+
+                        _t: float = time.time() - item[5]
+
+                        if _t > 10:
+                            console.line()
+                            console.print(f"[bold red]Error[/bold red] in process code [bold green]{ret}[/bold green]")
+                            console.print(f'    [bold green]{item[2]}[/bold green]')
+                            console.print(f'on file')
+                            console.print(f'    [bold green]{item[1]}[/bold green]')
+                            item[0].terminate()
+                            console.print(item[0].stdout.read().decode('utf-8'))
+                            console.print(item[0].stderr.read().decode('utf-8'))
+                            exit(1)
 
                         if ret is not None and ret == 0:
                             ready += 1

@@ -55,7 +55,11 @@ def install_project(args):
         sub.install_deps()
 
 def new_project(args):
-    print(f"Creating new file [bold blue]{args.new_name}[/bold blue]")
+    print(f"Creating new file [bold blue]{args.name}[/bold blue]")
+
+    project = Project.open('.')
+    project.new_source(f"{args.name}.cpp", default=f"#include \"{args.name}.hpp\"\n")
+    project.new_header(f"{args.name}.hpp", default=f"#pragma once\n")
 
 def upgrade_project(args):
     Repository.upgrade()
