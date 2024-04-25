@@ -34,12 +34,28 @@ def build_project(args):
 def run_project(args):
     print(f"Building project [bold blue]{args.path}[/bold blue]")
     project = Project.open(args.path)
+
+    if project.config["linker"]["type"] != "app" and project.config["linker"]["type"] != "console-app":
+        print(f"Project is not an application")
+        return
+
     compiler = Compiler.from_project(project)
     exec: str = compiler.compile()
 
     if exec:
         print(f"Running [bold green]{exec}[/bold green]")
         os.system(exec)
+
+def test_project(args):
+    print(f"Testing project [bold blue]{args.path}[/bold blue]")
+    project = Project.open(args.path)
+    compiler = Compiler.from_project(project)
+    exec: str = compiler.compile(is_test=True)
+
+    if exec:
+        print(f"Running tests")
+        os.system(exec)
+
 
 def install_project(args):
     print(f"Installing dependencies")

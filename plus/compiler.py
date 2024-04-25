@@ -52,7 +52,7 @@ class Compiler:
         cmd: str = self._generate_cxx_cmd(self.deps.sources[0], self.deps.sources[0] + ".o")
         rich.print(f"Command: [bold green]{cmd}[/bold green]") 
 
-    def compile(self, is_subproject: bool = False, wait_sp: bool = True) -> None:
+    def compile(self, is_subproject: bool = False, wait_sp: bool = True, is_test: bool = False) -> None:
         old_path: str = os.getcwd()
         os.chdir(self.project.path)
 
@@ -229,7 +229,7 @@ class Compiler:
         for src in self.deps.sources:
             objs.append(src.replace('src', 'obj') + ".o")
 
-        cmd: str = self._generate_link_cmd(objs, os.path.join(self.project.path, "bin", self.project.name))
+        cmd: str = self._generate_link_cmd(objs, os.path.join(self.project.path, "bin", self.project.name), is_test=True)
         if cmd:
             linkers.append(cmd)
         
@@ -243,7 +243,7 @@ class Compiler:
 
         return f"{self.cxx} -std={self.stdcxx} {includes} {libdirs} {libs} {defines} -c {source} -o {output} ".replace("\\", "/")
 
-    def _generate_link_cmd(self, sources: list[str], output: str) -> str:
+    def _generate_link_cmd(self, sources: list[str], output: str, is_test: bool = False) -> str:
         libdirs: str = " ".join([f"-L{lib}" for lib in self.deps.lib_dirs])
         libs: list[str] = [f"-l{lib}" for lib in self.deps.libs]
         defines: str = " ".join([f"-D{defn}" for defn in self.deps.defines])
@@ -256,26 +256,27 @@ class Compiler:
         if 'type' in self.project.config['linker']:
             type: str = self.project.config['linker']['type']
 
-            if type == 'shared-lib':
+            if type == 'shared-lib' and not is_test:
                 output = os.path.join(self.project.path, "lib", self.project.name + {
                     "Windows": ".dll",
                     "Linux": ".so",
                     "Darwin": ".dylib"
                 }[platform.system()])
                 return f"{self.cxx} -shared {' '.join(sources)} -o {output} {libdirs} {libs} {defines}".replace("\\", "/")
-            elif type == 'static-lib':
+            elif type == 'static-lib' and not is_test:
                 output = os.path.join(self.project.path, "lib", self.project.name + {
                     "Windows": ".lib",
                     "Linux": ".a",
                     "Darwin": ".a"
                 }[platform.system()])
                 return f"ar rcs {output} {' '.join(sources)}".replace("\\", "/")
-            elif type == 'console-app':
+            elif type == 'console-app' or is_test:
                 output = os.path.join(self.project.path, "bin", self.project.name + {
                     "Windows": ".exe",
                     "Linux": "",
                     "Darwin": ""
                 }[platform.system()])
+                test: str = '-e entry' if is_test else ''
                 return f"{self.cxx} {' '.join(sources)} -o {output} {defines} {libdirs} {libs}".replace("\\", "/")
 
         return ""

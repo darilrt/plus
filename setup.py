@@ -21,5 +21,6 @@ setup(
             'plus = plus.__main__:main'
         ]
     },
+    requires=['argparse', 'toml', 'rich'],
     packages=['plus']
 )

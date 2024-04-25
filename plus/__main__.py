@@ -1,11 +1,4 @@
-from plus.actions import init_project
-from plus.actions import build_project
-from plus.actions import run_project
-from plus.actions import install_project
-from plus.actions import new_project
-from plus.actions import upgrade_project
-from plus.actions import add_project
-from plus.actions import clean_project
+from plus.actions import *
 
 import argparse
 
@@ -41,6 +34,12 @@ def main():
     run_parser.add_argument('-r', '--release', action='store_true', help='run in release mode')
     run_parser.set_defaults(func=run_project)
 
+    # test subparser
+    test_parser = subparsers.add_parser('test', help='run the tests of the current project or the project specified')
+    test_parser.add_argument('path', help='project path', default='.', nargs='?')
+    test_parser.add_argument('-r', '--release', action='store_true', help='run in release mode')
+    test_parser.set_defaults(func=test_project)
+
     # install subparser
     install_parser = subparsers.add_parser('install', help='install all dependencies of the current project')
     install_parser.add_argument('-f', '--force', action='store_true', help='force install dependencies')
@@ -72,9 +71,12 @@ def main():
     clean_parser.set_defaults(func=clean_project)
     
     args = parser.parse_args()
-    
+
     if hasattr(args, 'func'):
         args.func(args)
+
+def execute_plugin(plugin):
+    print(f"Executing plugin {plugin}")
 
 if __name__ == "__main__":
     main()
